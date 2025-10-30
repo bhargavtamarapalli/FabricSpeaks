@@ -12,23 +12,23 @@ export default function Footer() {
             <h3 className="font-medium mb-4 uppercase tracking-wider text-sm">Shop</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/women" data-testid="link-footer-women">
-                  <span className="text-muted-foreground hover:text-foreground">Women</span>
+                <Link href="/clothing" data-testid="link-footer-clothing">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors duration-200">Clothing</span>
                 </Link>
               </li>
               <li>
-                <Link href="/men" data-testid="link-footer-men">
-                  <span className="text-muted-foreground hover:text-foreground">Men</span>
+                <Link href="/accessories" data-testid="link-footer-accessories">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors duration-200">Accessories</span>
                 </Link>
               </li>
               <li>
                 <Link href="/new-arrivals" data-testid="link-footer-new">
-                  <span className="text-muted-foreground hover:text-foreground">New Arrivals</span>
+                  <span className="text-muted-foreground hover:text-foreground transition-colors duration-200">New Arrivals</span>
                 </Link>
               </li>
               <li>
                 <Link href="/sale" data-testid="link-footer-sale">
-                  <span className="text-muted-foreground hover:text-foreground">Sale</span>
+                  <span className="text-muted-foreground hover:text-foreground transition-colors duration-200">Sale</span>
                 </Link>
               </li>
             </ul>
@@ -61,26 +61,26 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="font-medium mb-4 uppercase tracking-wider text-sm">Customer Service</h3>
+            <h3 className="font-medium mb-4 uppercase tracking-wider text-sm">My Account</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/contact" data-testid="link-footer-contact">
-                  <span className="text-muted-foreground hover:text-foreground">Contact Us</span>
+                <Link href="/profile" data-testid="link-footer-profile">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors duration-200">Profile</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/orders" data-testid="link-footer-orders">
+                  <span className="text-muted-foreground hover:text-foreground transition-colors duration-200">My Orders</span>
                 </Link>
               </li>
               <li>
                 <Link href="/shipping" data-testid="link-footer-shipping">
-                  <span className="text-muted-foreground hover:text-foreground">Shipping & Returns</span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" data-testid="link-footer-faq">
-                  <span className="text-muted-foreground hover:text-foreground">FAQ</span>
+                  <span className="text-muted-foreground hover:text-foreground transition-colors duration-200">Shipping & Returns</span>
                 </Link>
               </li>
               <li>
                 <Link href="/size-guide" data-testid="link-footer-size">
-                  <span className="text-muted-foreground hover:text-foreground">Size Guide</span>
+                  <span className="text-muted-foreground hover:text-foreground transition-colors duration-200">Size Guide</span>
                 </Link>
               </li>
             </ul>

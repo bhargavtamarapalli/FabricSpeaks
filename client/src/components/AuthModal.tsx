@@ -32,14 +32,14 @@ export default function AuthModal({ isOpen, onClose, onLogin, onRegister }: Auth
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-black/50 z-40 animate-in fade-in duration-200"
         onClick={onClose}
         data-testid="overlay-auth"
       />
 
       <div
         data-testid="modal-auth"
-        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-background z-50 shadow-xl rounded-lg"
+        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-background z-50 shadow-xl rounded-lg animate-in zoom-in-95 fade-in duration-300"
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 data-testid="text-auth-title" className="text-xl font-medium">

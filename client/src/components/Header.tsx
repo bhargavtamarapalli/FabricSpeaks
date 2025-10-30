@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { Link } from "wouter";
+import ThemeToggle from "./ThemeToggle";
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -33,23 +34,23 @@ export default function Header({ cartItemCount = 0, onCartClick, onAuthClick }: 
           </Link>
 
           <nav className="hidden lg:flex items-center gap-8">
-            <Link href="/women" data-testid="link-women">
-              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md">
-                Women
+            <Link href="/clothing" data-testid="link-clothing">
+              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200">
+                Clothing
               </span>
             </Link>
-            <Link href="/men" data-testid="link-men">
-              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md">
-                Men
+            <Link href="/accessories" data-testid="link-accessories">
+              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200">
+                Accessories
               </span>
             </Link>
             <Link href="/new-arrivals" data-testid="link-new-arrivals">
-              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md">
+              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200">
                 New Arrivals
               </span>
             </Link>
             <Link href="/sale" data-testid="link-sale">
-              <span className="text-sm uppercase tracking-widest text-accent-foreground hover-elevate active-elevate-2 px-4 py-2 rounded-md">
+              <span className="text-sm uppercase tracking-widest text-accent-foreground hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200">
                 Sale
               </span>
             </Link>
@@ -61,15 +62,19 @@ export default function Header({ cartItemCount = 0, onCartClick, onAuthClick }: 
               variant="ghost"
               data-testid="button-search"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="transition-all duration-200"
             >
               <Search className="h-5 w-5" />
             </Button>
+
+            <ThemeToggle />
 
             <Button
               size="icon"
               variant="ghost"
               data-testid="button-account"
               onClick={onAuthClick}
+              className="transition-all duration-200"
             >
               <User className="h-5 w-5" />
             </Button>
@@ -77,7 +82,7 @@ export default function Header({ cartItemCount = 0, onCartClick, onAuthClick }: 
             <Button
               size="icon"
               variant="ghost"
-              className="relative"
+              className="relative transition-all duration-200"
               data-testid="button-cart"
               onClick={onCartClick}
             >
@@ -85,7 +90,7 @@ export default function Header({ cartItemCount = 0, onCartClick, onAuthClick }: 
               {cartItemCount > 0 && (
                 <span
                   data-testid="text-cart-count"
-                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center"
+                  className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center animate-in fade-in zoom-in duration-200"
                 >
                   {cartItemCount}
                 </span>
@@ -106,18 +111,18 @@ export default function Header({ cartItemCount = 0, onCartClick, onAuthClick }: 
         )}
 
         {isMenuOpen && (
-          <nav className="lg:hidden border-t border-border px-6 py-4 space-y-4">
-            <Link href="/women" data-testid="link-mobile-women">
-              <div className="text-sm uppercase tracking-widest py-2">Women</div>
+          <nav className="lg:hidden border-t border-border px-6 py-4 space-y-4 animate-in slide-in-from-top duration-300">
+            <Link href="/clothing" data-testid="link-mobile-clothing">
+              <div className="text-sm uppercase tracking-widest py-2 transition-colors duration-200">Clothing</div>
             </Link>
-            <Link href="/men" data-testid="link-mobile-men">
-              <div className="text-sm uppercase tracking-widest py-2">Men</div>
+            <Link href="/accessories" data-testid="link-mobile-accessories">
+              <div className="text-sm uppercase tracking-widest py-2 transition-colors duration-200">Accessories</div>
             </Link>
             <Link href="/new-arrivals" data-testid="link-mobile-new-arrivals">
-              <div className="text-sm uppercase tracking-widest py-2">New Arrivals</div>
+              <div className="text-sm uppercase tracking-widest py-2 transition-colors duration-200">New Arrivals</div>
             </Link>
             <Link href="/sale" data-testid="link-mobile-sale">
-              <div className="text-sm uppercase tracking-widest py-2">Sale</div>
+              <div className="text-sm uppercase tracking-widest py-2 transition-colors duration-200">Sale</div>
             </Link>
           </nav>
         )}

@@ -39,14 +39,14 @@ export default function ShoppingCart({
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-black/50 z-40 animate-in fade-in duration-200"
         onClick={onClose}
         data-testid="overlay-cart"
       />
 
       <div
         data-testid="drawer-cart"
-        className="fixed right-0 top-0 h-full w-full md:w-[480px] bg-background z-50 shadow-xl flex flex-col"
+        className="fixed right-0 top-0 h-full w-full md:w-[480px] bg-background z-50 shadow-xl flex flex-col animate-in slide-in-from-right duration-300"
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 data-testid="text-cart-title" className="text-xl font-medium">

@@ -19,14 +19,14 @@ export default function Hero({
   return (
     <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden">
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
         style={{ backgroundImage: `url(${imageUrl})` }}
       />
       <div className="absolute inset-0 bg-black/30" />
 
       <div className="relative h-full flex items-center justify-center px-6">
-        <div className="text-center max-w-3xl">
-          <div className="backdrop-blur-md bg-background/10 rounded-lg p-8 md:p-12">
+        <div className="text-center max-w-3xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="backdrop-blur-md bg-background/10 rounded-lg p-8 md:p-12 transition-all duration-300 hover:bg-background/20">
             <h2
               data-testid="text-hero-title"
               className="text-4xl md:text-6xl font-light text-white mb-4 tracking-tight"
@@ -44,7 +44,7 @@ export default function Hero({
                 size="lg"
                 variant="outline"
                 data-testid="button-hero-cta"
-                className="backdrop-blur-sm bg-background/20 text-white border-white/40 hover:bg-background/30 min-h-12 px-8"
+                className="backdrop-blur-sm bg-background/20 text-white border-white/40 hover:bg-background/30 min-h-12 px-8 transition-all duration-300 hover:scale-105"
               >
                 {ctaText}
               </Button>

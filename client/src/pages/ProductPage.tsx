@@ -39,12 +39,12 @@ export default function ProductPage() {
       <main className="flex-1">
         <ProductDetail
           brand="ATELIER"
-          name="Cashmere Wool Coat"
+          name="Men's Cashmere Wool Coat"
           price={890}
           salePrice={670}
-          description="Luxuriously crafted from the finest cashmere wool blend, this coat embodies timeless elegance. Featuring a classic silhouette with modern tailoring, it offers both warmth and sophistication for the contemporary wardrobe. The minimalist design ensures versatility across seasons."
+          description="Luxuriously crafted from the finest cashmere wool blend, this men's coat embodies timeless elegance. Featuring a classic silhouette with modern tailoring, it offers both warmth and sophistication for the contemporary gentleman's wardrobe. The minimalist design ensures versatility across seasons."
           images={[coat, coat, coat, coat]}
-          sizes={["XS", "S", "M", "L", "XL"]}
+          sizes={["S", "M", "L", "XL", "XXL"]}
           onAddToCart={handleAddToCart}
         />
       </main>

@@ -33,7 +33,7 @@ export default function Home() {
     {
       id: '1',
       brand: 'ATELIER',
-      name: 'Cashmere Wool Coat',
+      name: "Men's Cashmere Wool Coat",
       price: 890,
       salePrice: 670,
       imageUrl: coat,
@@ -41,22 +41,22 @@ export default function Home() {
     {
       id: '2',
       brand: 'MAISON',
-      name: 'Silk Blouse',
-      price: 420,
+      name: "Men's Oxford Shirt",
+      price: 220,
       imageUrl: blouse,
       isNew: true,
     },
     {
       id: '3',
       brand: 'ATELIER',
-      name: 'Tailored Trousers',
+      name: "Men's Tailored Trousers",
       price: 350,
       imageUrl: trousers,
     },
     {
       id: '4',
       brand: 'MAISON',
-      name: 'Leather Handbag',
+      name: "Men's Leather Briefcase",
       price: 1200,
       imageUrl: bag,
       isNew: true,
@@ -64,14 +64,14 @@ export default function Home() {
     {
       id: '5',
       brand: 'ATELIER',
-      name: 'Knit Sweater',
+      name: "Men's Merino Wool Sweater",
       price: 280,
       imageUrl: sweater,
     },
     {
       id: '6',
       brand: 'MAISON',
-      name: 'Leather Ankle Boots',
+      name: "Men's Chelsea Boots",
       price: 550,
       salePrice: 385,
       imageUrl: boots,
@@ -79,14 +79,14 @@ export default function Home() {
     {
       id: '7',
       brand: 'ATELIER',
-      name: 'Wool Blazer',
+      name: "Men's Wool Blazer",
       price: 780,
       imageUrl: blazer,
     },
     {
       id: '8',
       brand: 'MAISON',
-      name: 'Premium Cashmere Coat',
+      name: "Men's Premium Overcoat",
       price: 950,
       imageUrl: coat,
     },
@@ -112,14 +112,14 @@ export default function Home() {
 
       <main className="flex-1">
         <Hero
-          title="Spring Collection 2025"
-          subtitle="Discover timeless elegance with our curated selection"
+          title="Men's Spring Collection 2025"
+          subtitle="Discover timeless sophistication with our curated men's collection"
           imageUrl={heroImage}
           ctaText="Explore Collection"
           ctaLink="/shop"
         />
 
-        <ProductGrid products={products} title="New Arrivals" />
+        <ProductGrid products={products} title="New Arrivals for Men" />
       </main>
 
       <Footer />
