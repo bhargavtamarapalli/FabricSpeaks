@@ -5,14 +5,15 @@ import ProductGrid from "@/components/ProductGrid";
 import Footer from "@/components/Footer";
 import ShoppingCart from "@/components/ShoppingCart";
 import AuthModal from "@/components/AuthModal";
-import heroImage from '@assets/generated_images/Fashion_editorial_hero_image_ab08c975.png';
-import coat from '@assets/generated_images/Black_cashmere_wool_coat_bdc7199b.png';
-import blouse from '@assets/generated_images/Beige_silk_blouse_aba3fb75.png';
-import trousers from '@assets/generated_images/Navy_tailored_trousers_2971ff9f.png';
-import bag from '@assets/generated_images/White_leather_handbag_a51b7fc1.png';
-import sweater from '@assets/generated_images/Cream_knit_sweater_ea49eca8.png';
-import boots from '@assets/generated_images/Black_leather_ankle_boots_5c2dfe3d.png';
-import blazer from '@assets/generated_images/Grey_wool_blazer_cbc57447.png';
+import heroImage from '@assets/generated_images/Men\'s_fashion_hero_editorial_7382b369.png';
+import coat from '@assets/generated_images/Luxury_men\'s_black_cashmere_coat_cc266279.png';
+import shirt from '@assets/generated_images/Men\'s_white_Oxford_shirt_573f333c.png';
+import trousers from '@assets/generated_images/Men\'s_grey_tailored_trousers_64b68ccd.png';
+import briefcase from '@assets/generated_images/Men\'s_brown_leather_briefcase_d5a30cf5.png';
+import sweater from '@assets/generated_images/Men\'s_navy_merino_sweater_266e4eb2.png';
+import boots from '@assets/generated_images/Men\'s_black_Chelsea_boots_f0beca21.png';
+import blazer from '@assets/generated_images/Men\'s_charcoal_wool_blazer_af4c6c92.png';
+import overcoat from '@assets/generated_images/Men\'s_camel_cashmere_overcoat_939b4b8d.png';
 
 export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -43,7 +44,7 @@ export default function Home() {
       brand: 'MAISON',
       name: "Men's Oxford Shirt",
       price: 220,
-      imageUrl: blouse,
+      imageUrl: shirt,
       isNew: true,
     },
     {
@@ -58,7 +59,7 @@ export default function Home() {
       brand: 'MAISON',
       name: "Men's Leather Briefcase",
       price: 1200,
-      imageUrl: bag,
+      imageUrl: briefcase,
       isNew: true,
     },
     {
@@ -88,7 +89,7 @@ export default function Home() {
       brand: 'MAISON',
       name: "Men's Premium Overcoat",
       price: 950,
-      imageUrl: coat,
+      imageUrl: overcoat,
     },
   ];
 

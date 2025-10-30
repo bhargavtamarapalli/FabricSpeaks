@@ -5,11 +5,12 @@ import Footer from "@/components/Footer";
 import ShoppingCart from "@/components/ShoppingCart";
 import AuthModal from "@/components/AuthModal";
 import ProductGrid from "@/components/ProductGrid";
-import coat from '@assets/generated_images/Black_cashmere_wool_coat_bdc7199b.png';
-import blouse from '@assets/generated_images/Beige_silk_blouse_aba3fb75.png';
-import trousers from '@assets/generated_images/Navy_tailored_trousers_2971ff9f.png';
-import sweater from '@assets/generated_images/Cream_knit_sweater_ea49eca8.png';
-import blazer from '@assets/generated_images/Grey_wool_blazer_cbc57447.png';
+import coat from '@assets/generated_images/Luxury_men\'s_black_cashmere_coat_cc266279.png';
+import shirt from '@assets/generated_images/Men\'s_white_Oxford_shirt_573f333c.png';
+import trousers from '@assets/generated_images/Men\'s_grey_tailored_trousers_64b68ccd.png';
+import sweater from '@assets/generated_images/Men\'s_navy_merino_sweater_266e4eb2.png';
+import blazer from '@assets/generated_images/Men\'s_charcoal_wool_blazer_af4c6c92.png';
+import overcoat from '@assets/generated_images/Men\'s_camel_cashmere_overcoat_939b4b8d.png';
 
 export default function Clothing() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -30,7 +31,7 @@ export default function Clothing() {
       brand: 'MAISON',
       name: "Men's Oxford Shirt",
       price: 220,
-      imageUrl: blouse,
+      imageUrl: shirt,
       isNew: true,
     },
     {
@@ -59,7 +60,7 @@ export default function Clothing() {
       brand: 'MAISON',
       name: "Men's Premium Overcoat",
       price: 950,
-      imageUrl: coat,
+      imageUrl: overcoat,
     },
   ];
 

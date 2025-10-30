@@ -5,8 +5,8 @@ import Footer from "@/components/Footer";
 import ShoppingCart from "@/components/ShoppingCart";
 import AuthModal from "@/components/AuthModal";
 import ProductGrid from "@/components/ProductGrid";
-import coat from '@assets/generated_images/Black_cashmere_wool_coat_bdc7199b.png';
-import boots from '@assets/generated_images/Black_leather_ankle_boots_5c2dfe3d.png';
+import coat from '@assets/generated_images/Luxury_men\'s_black_cashmere_coat_cc266279.png';
+import boots from '@assets/generated_images/Men\'s_black_Chelsea_boots_f0beca21.png';
 
 export default function Sale() {
   const [isCartOpen, setIsCartOpen] = useState(false);

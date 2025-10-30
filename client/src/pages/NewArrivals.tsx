@@ -5,8 +5,8 @@ import Footer from "@/components/Footer";
 import ShoppingCart from "@/components/ShoppingCart";
 import AuthModal from "@/components/AuthModal";
 import ProductGrid from "@/components/ProductGrid";
-import blouse from '@assets/generated_images/Beige_silk_blouse_aba3fb75.png';
-import bag from '@assets/generated_images/White_leather_handbag_a51b7fc1.png';
+import shirt from '@assets/generated_images/Men\'s_white_Oxford_shirt_573f333c.png';
+import briefcase from '@assets/generated_images/Men\'s_brown_leather_briefcase_d5a30cf5.png';
 
 export default function NewArrivals() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -19,7 +19,7 @@ export default function NewArrivals() {
       brand: 'MAISON',
       name: "Men's Oxford Shirt",
       price: 220,
-      imageUrl: blouse,
+      imageUrl: shirt,
       isNew: true,
     },
     {
@@ -27,7 +27,7 @@ export default function NewArrivals() {
       brand: 'MAISON',
       name: "Men's Leather Briefcase",
       price: 1200,
-      imageUrl: bag,
+      imageUrl: briefcase,
       isNew: true,
     },
     {
@@ -35,7 +35,7 @@ export default function NewArrivals() {
       brand: 'MAISON',
       name: "Men's Leather Wallet",
       price: 220,
-      imageUrl: bag,
+      imageUrl: briefcase,
       isNew: true,
     },
   ];

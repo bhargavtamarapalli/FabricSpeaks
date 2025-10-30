@@ -5,8 +5,8 @@ import Footer from "@/components/Footer";
 import ShoppingCart from "@/components/ShoppingCart";
 import AuthModal from "@/components/AuthModal";
 import ProductGrid from "@/components/ProductGrid";
-import bag from '@assets/generated_images/White_leather_handbag_a51b7fc1.png';
-import boots from '@assets/generated_images/Black_leather_ankle_boots_5c2dfe3d.png';
+import briefcase from '@assets/generated_images/Men\'s_brown_leather_briefcase_d5a30cf5.png';
+import boots from '@assets/generated_images/Men\'s_black_Chelsea_boots_f0beca21.png';
 
 export default function Accessories() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -19,7 +19,7 @@ export default function Accessories() {
       brand: 'MAISON',
       name: "Men's Leather Briefcase",
       price: 1200,
-      imageUrl: bag,
+      imageUrl: briefcase,
       isNew: true,
     },
     {
@@ -35,14 +35,14 @@ export default function Accessories() {
       brand: 'ATELIER',
       name: "Men's Leather Belt",
       price: 180,
-      imageUrl: bag,
+      imageUrl: briefcase,
     },
     {
       id: '10',
       brand: 'MAISON',
       name: "Men's Leather Wallet",
       price: 220,
-      imageUrl: bag,
+      imageUrl: briefcase,
       isNew: true,
     },
   ];

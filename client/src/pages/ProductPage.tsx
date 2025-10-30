@@ -5,7 +5,7 @@ import ProductDetail from "@/components/ProductDetail";
 import Footer from "@/components/Footer";
 import ShoppingCart from "@/components/ShoppingCart";
 import AuthModal from "@/components/AuthModal";
-import coat from '@assets/generated_images/Black_cashmere_wool_coat_bdc7199b.png';
+import coat from '@assets/generated_images/Luxury_men\'s_black_cashmere_coat_cc266279.png';
 
 export default function ProductPage() {
   const [, params] = useRoute("/product/:id");

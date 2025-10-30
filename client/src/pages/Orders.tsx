@@ -7,8 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, Truck, CheckCircle } from "lucide-react";
-import coat from '@assets/generated_images/Black_cashmere_wool_coat_bdc7199b.png';
-import blouse from '@assets/generated_images/Beige_silk_blouse_aba3fb75.png';
+import coat from '@assets/generated_images/Luxury_men\'s_black_cashmere_coat_cc266279.png';
+import shirt from '@assets/generated_images/Men\'s_white_Oxford_shirt_573f333c.png';
 
 export default function Orders() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -20,10 +20,10 @@ export default function Orders() {
       id: 'ORD-2025-001',
       date: 'March 15, 2025',
       status: 'delivered',
-      total: 1090,
+      total: 890,
       items: [
         { name: 'Cashmere Wool Coat', size: 'M', quantity: 1, price: 670, image: coat },
-        { name: 'Silk Blouse', size: 'L', quantity: 1, price: 420, image: blouse },
+        { name: 'Oxford Shirt', size: 'L', quantity: 1, price: 220, image: shirt },
       ],
     },
     {
@@ -41,7 +41,7 @@ export default function Orders() {
       status: 'processing',
       total: 550,
       items: [
-        { name: 'Leather Ankle Boots', size: '42', quantity: 1, price: 550, image: blouse },
+        { name: 'Chelsea Boots', size: '42', quantity: 1, price: 550, image: shirt },
       ],
     },
   ];
