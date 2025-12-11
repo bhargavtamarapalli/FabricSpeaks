@@ -1,0 +1,12 @@
+{
+  "run": "admin-e2e",
+  "start": "2025-11-11T09:52:59.945Z",
+  "end": "2025-11-11T09:52:59.979Z",
+  "docker_container": "fs-postgres",
+  "docker_running": true,
+  "db_reachable": true,
+  "vitest_cmd": "npx vitest run server/__tests__/rbac.admin.test.ts --run --config vitest.server.config.ts",
+  "vitest_exit_code": 0,
+  "vitest_success": true,
+  "vitest_output_snippet": ""
+}

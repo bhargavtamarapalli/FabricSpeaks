@@ -1,0 +1,360 @@
+/**
+ * Mobile Responsiveness Utilities
+ * CSS classes and utilities for mobile-first responsive design
+ */
+
+/* ===========================
+   Mobile-First Base Styles
+   =========================== */
+
+/* Ensure minimum touch target size (44x44px) */
+.touch-target {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+/* Prevent horizontal scroll */
+html,
+body {
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+/* Improve text readability on mobile */
+body {
+    font-size: 16px;
+    /* Minimum for mobile readability */
+    line-height: 1.6;
+}
+
+/* ===========================
+   Responsive Typography
+   =========================== */
+
+/* Mobile: 14-16px base */
+@media (max-width: 640px) {
+    h1 {
+        font-size: 1.75rem;
+        /* 28px */
+        line-height: 1.2;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+        /* 24px */
+        line-height: 1.3;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+        /* 20px */
+        line-height: 1.4;
+    }
+
+    p,
+    li {
+        font-size: 1rem;
+        /* 16px */
+        line-height: 1.6;
+    }
+
+    small {
+        font-size: 0.875rem;
+        /* 14px */
+    }
+}
+
+/* ===========================
+   Mobile Spacing
+   =========================== */
+
+/* Reduce padding on mobile */
+@media (max-width: 640px) {
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .section-padding {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+}
+
+/* ===========================
+   Mobile-Optimized Components
+   =========================== */
+
+/* Mobile-friendly buttons */
+@media (max-width: 640px) {
+
+    button,
+    .btn {
+        min-height: 44px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+
+    /* Full-width buttons on mobile */
+    .btn-mobile-full {
+        width: 100%;
+    }
+}
+
+/* Mobile-friendly forms */
+@media (max-width: 640px) {
+
+    input,
+    select,
+    textarea {
+        min-height: 44px;
+        font-size: 16px;
+        /* Prevents zoom on iOS */
+        padding: 0.75rem;
+    }
+
+    label {
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ===========================
+   Mobile Navigation
+   =========================== */
+
+/* Hide desktop nav on mobile */
+@media (max-width: 768px) {
+    .desktop-nav {
+        display: none;
+    }
+
+    .mobile-nav {
+        display: flex;
+    }
+}
+
+/* Show desktop nav on larger screens */
+@media (min-width: 769px) {
+    .desktop-nav {
+        display: flex;
+    }
+
+    .mobile-nav {
+        display: none;
+    }
+}
+
+/* ===========================
+   Mobile Grid Layouts
+   =========================== */
+
+/* Product grid - responsive columns */
+.product-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    /* 2 columns on mobile */
+}
+
+@media (min-width: 640px) {
+    .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+        /* 3 columns on tablet */
+    }
+}
+
+@media (min-width: 1024px) {
+    .product-grid {
+        grid-template-columns: repeat(4, 1fr);
+        /* 4 columns on desktop */
+    }
+}
+
+/* ===========================
+   Mobile Card Layouts
+   =========================== */
+
+@media (max-width: 640px) {
+    .card {
+        padding: 1rem;
+    }
+
+    .card-image {
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+    }
+}
+
+/* ===========================
+   Mobile-Friendly Tables
+   =========================== */
+
+@media (max-width: 640px) {
+
+    /* Stack table rows on mobile */
+    .responsive-table {
+        display: block;
+    }
+
+    .responsive-table thead {
+        display: none;
+    }
+
+    .responsive-table tbody,
+    .responsive-table tr,
+    .responsive-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .responsive-table tr {
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+
+    .responsive-table td {
+        text-align: right;
+        padding: 0.5rem 0;
+        position: relative;
+        padding-left: 50%;
+    }
+
+    .responsive-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 45%;
+        padding-right: 10px;
+        text-align: left;
+        font-weight: 600;
+    }
+}
+
+/* ===========================
+   Mobile Modal/Dialog
+   =========================== */
+
+@media (max-width: 640px) {
+
+    .dialog-content,
+    .modal-content {
+        width: 95vw;
+        max-width: 95vw;
+        margin: 0.5rem;
+    }
+
+    .dialog-header,
+    .modal-header {
+        padding: 1rem;
+    }
+
+    .dialog-body,
+    .modal-body {
+        padding: 1rem;
+    }
+}
+
+/* ===========================
+   Mobile-Optimized Images
+   =========================== */
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+.responsive-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+/* ===========================
+   Prevent Text Selection Issues
+   =========================== */
+
+/* Prevent accidental text selection on touch */
+.no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* ===========================
+   Mobile-Friendly Scrolling
+   =========================== */
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Horizontal scroll containers */
+.scroll-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+}
+
+.scroll-container::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+/* ===========================
+   Mobile Safe Areas (iOS)
+   =========================== */
+
+/* Account for notch on iOS */
+@supports (padding: max(0px)) {
+    .safe-area-top {
+        padding-top: max(1rem, env(safe-area-inset-top));
+    }
+
+    .safe-area-bottom {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    .safe-area-left {
+        padding-left: max(1rem, env(safe-area-inset-left));
+    }
+
+    .safe-area-right {
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
+
+/* ===========================
+   Accessibility - Focus States
+   =========================== */
+
+/* Visible focus for keyboard navigation */
+*:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* ===========================
+   Print Styles
+   =========================== */
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body {
+        font-size: 12pt;
+    }
+
+    a {
+        text-decoration: underline;
+    }
+}

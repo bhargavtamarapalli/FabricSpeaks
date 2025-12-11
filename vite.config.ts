@@ -23,6 +23,7 @@ export default defineConfig({
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@server": path.resolve(import.meta.dirname, "server"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
@@ -32,6 +33,18 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],
