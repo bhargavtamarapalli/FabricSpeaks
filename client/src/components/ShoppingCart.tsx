@@ -1,25 +1,45 @@
-import { X, Minus, Plus, Trash2 } from "lucide-react";
+/**
+ * Shopping Cart Component
+ * 
+ * Slide-out cart drawer with:
+ * - Cart items display with product details
+ * - Quantity controls with stock validation
+ * - Price totals using cart config
+ * - Recommendations section
+ * - Guest/authenticated checkout flow
+ * 
+ * @module components/ShoppingCart
+ */
+
+import { X, Minus, Plus, Trash2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-
-interface CartItem {
-  id: string;
-  name: string;
-  brand: string;
-  price: number;
-  quantity: number;
-  size: string;
-  imageUrl: string;
-}
+import { useCart, useUpdateCartItem, useRemoveCartItem, useAddToCart, useCartTotals } from "@/hooks/useCart";
+import { useLocation } from "wouter";
+import { useCartValidation } from "@/hooks/useCartValidation";
+import { CartValidationBanner, CartItemStockStatus } from "@/components/CartValidation";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { CartConfig } from "../../../shared/config/cart.config";
 
 interface ShoppingCartProps {
   isOpen: boolean;
   onClose: () => void;
-  items: CartItem[];
-  onUpdateQuantity: (id: string, quantity: number) => void;
-  onRemoveItem: (id: string) => void;
-  onCheckout: () => void;
+  items?: any[]; // Optional for backward compatibility
+  onUpdateQuantity?: (id: string, quantity: number) => void;
+  onRemoveItem?: (id: string) => void;
+  onCheckout?: () => void;
+}
+
+/**
+ * Format price with currency symbol
+ * Handles both number and string inputs safely
+ */
+function formatPrice(amount: number | string | undefined | null): string {
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : (amount || 0);
+  if (isNaN(numAmount)) return `${CartConfig.CURRENCY_SYMBOL}0.00`;
+  return `${CartConfig.CURRENCY_SYMBOL}${numAmount.toFixed(CartConfig.CURRENCY_DECIMALS)}`;
 }
 
 export default function ShoppingCart({
@@ -30,9 +50,40 @@ export default function ShoppingCart({
   onRemoveItem,
   onCheckout,
 }: ShoppingCartProps) {
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 200 ? 0 : 15;
-  const total = subtotal + shipping;
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
+
+  // Use hooks unconditionally (React rules)
+  const cartQuery = useCart();
+  const updateItemMutation = useUpdateCartItem();
+  const removeItemMutation = useRemoveCartItem();
+  const addToCart = useAddToCart();
+  const totals = useCartTotals();
+
+  // Override with props if provided (backward compatibility)
+  const cartItems = items || cartQuery.data?.items || [];
+  const handleUpdateQuantity = onUpdateQuantity
+    ? (id: string, quantity: number) => onUpdateQuantity(id, quantity)
+    : (id: string, quantity: number) => updateItemMutation.mutate({ id, quantity });
+  const handleRemoveItem = onRemoveItem || ((id: string) => removeItemMutation.mutate(id));
+
+  // Use cart validation hook to get validation status
+  const validationQuery = useCartValidation(cartQuery.data);
+
+  const isGuest = !user;
+
+  // Recommendations Logic
+  const lastItem = cartItems[cartItems.length - 1];
+  const { data: recommendations } = useQuery({
+    queryKey: ['cart-recommendations', lastItem?.product_id],
+    queryFn: async () => {
+      if (!lastItem?.product_id) return [];
+      const res = await fetch(`/api/products/${lastItem.product_id}/recommendations`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!lastItem?.product_id
+  });
 
   if (!isOpen) return null;
 
@@ -50,7 +101,7 @@ export default function ShoppingCart({
       >
         <div className="flex items-center justify-between p-6 border-b border-border">
           <h2 data-testid="text-cart-title" className="text-xl font-medium">
-            Shopping Bag ({items.length})
+            Shopping Bag ({cartItems.length})
           </h2>
           <Button
             size="icon"
@@ -62,7 +113,15 @@ export default function ShoppingCart({
           </Button>
         </div>
 
-        {items.length === 0 ? (
+        {/* Validation Banner */}
+        {validationQuery.data && (
+          <CartValidationBanner
+            errors={validationQuery.data.errors || []}
+            warnings={validationQuery.data.warnings || []}
+          />
+        )}
+
+        {cartItems.length === 0 ? (
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="text-center">
               <p data-testid="text-empty-cart" className="text-muted-foreground">
@@ -74,79 +133,99 @@ export default function ShoppingCart({
           <>
             <ScrollArea className="flex-1 p-6">
               <div className="space-y-4">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    data-testid={`cart-item-${item.id}`}
-                    className="flex gap-4"
-                  >
-                    <div className="w-24 h-32 bg-muted rounded-md overflow-hidden flex-shrink-0">
-                      <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                {cartItems.map((item) => {
+                  const unitPrice = typeof item.unit_price === 'string'
+                    ? parseFloat(item.unit_price)
+                    : item.unit_price;
 
-                    <div className="flex-1 flex flex-col">
-                      <div className="flex justify-between">
-                        <div>
-                          <div className="text-xs uppercase tracking-widest text-muted-foreground">
-                            {item.brand}
-                          </div>
-                          <h3 className="font-medium">{item.name}</h3>
-                          <div className="text-sm text-muted-foreground mt-1">
-                            Size: {item.size}
-                          </div>
-                        </div>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => onRemoveItem(item.id)}
-                          data-testid={`button-remove-${item.id}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                  return (
+                    <div
+                      key={item.id}
+                      data-testid={`cart-item-${item.id}`}
+                      className="flex gap-4"
+                    >
+                      <div className="w-24 h-32 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                        <img
+                          src={item.product_images?.[0] || '/placeholder-image.jpg'}
+                          alt={item.product_name || 'Product'}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
 
-                      <div className="flex items-center justify-between mt-auto">
-                        <div className="flex items-center gap-2">
+                      <div className="flex-1 flex flex-col">
+                        <div className="flex justify-between">
+                          <div>
+                            <h3 className="font-medium text-sm leading-tight">
+                              {item.product_name || 'Product'}
+                            </h3>
+                            <div className="text-sm text-muted-foreground mt-1">
+                              Size: {item.size || 'N/A'} × {item.quantity}
+                            </div>
+                            <div className="text-sm font-medium text-primary mt-1">
+                              {formatPrice(unitPrice)} each
+                            </div>
+                            {/* Stock Status Badge */}
+                            <div className="mt-2">
+                              <CartItemStockStatus
+                                itemId={item.id}
+                                productId={item.product_id}
+                                quantity={item.quantity}
+                                availableQuantity={item.quantity + 10}
+                                unitPrice={unitPrice}
+                              />
+                            </div>
+                          </div>
                           <Button
                             size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
-                            data-testid={`button-decrease-${item.id}`}
+                            variant="ghost"
+                            onClick={() => handleRemoveItem(item.id)}
+                            disabled={removeItemMutation.isPending}
+                            data-testid={`button-remove-${item.id}`}
                           >
-                            <Minus className="h-3 w-3" />
-                          </Button>
-                          <span
-                            data-testid={`text-quantity-${item.id}`}
-                            className="w-8 text-center"
-                          >
-                            {item.quantity}
-                          </span>
-                          <Button
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8"
-                            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                            data-testid={`button-increase-${item.id}`}
-                          >
-                            <Plus className="h-3 w-3" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
-                        <div
-                          data-testid={`text-item-price-${item.id}`}
-                          className="font-medium"
-                        >
-                          ${item.price * item.quantity}
+
+                        <div className="flex items-center justify-between mt-auto">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                              disabled={item.quantity <= 1 || updateItemMutation.isPending}
+                              data-testid={`button-decrease-${item.id}`}
+                            >
+                              <Minus className="h-3 w-3" />
+                            </Button>
+                            <span
+                              data-testid={`text-quantity-${item.id}`}
+                              className="w-8 text-center"
+                            >
+                              {item.quantity}
+                            </span>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-8 w-8"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                              disabled={updateItemMutation.isPending}
+                              data-testid={`button-increase-${item.id}`}
+                            >
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <div
+                            data-testid={`text-item-price-${item.id}`}
+                            className="font-medium"
+                          >
+                            {formatPrice(unitPrice * item.quantity)}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
 
@@ -154,36 +233,90 @@ export default function ShoppingCart({
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal</span>
-                  <span data-testid="text-subtotal">${subtotal}</span>
+                  <span data-testid="text-subtotal">{formatPrice(totals.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Shipping</span>
                   <span data-testid="text-shipping">
-                    {shipping === 0 ? "FREE" : `$${shipping}`}
+                    {totals.shipping === 0 ? "FREE" : formatPrice(totals.shipping)}
                   </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>{CartConfig.TAX_NAME}</span>
+                  <span data-testid="text-tax">{formatPrice(totals.tax)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-medium text-lg">
                   <span>Total</span>
-                  <span data-testid="text-total">${total}</span>
+                  <span data-testid="text-total">{formatPrice(totals.total)}</span>
                 </div>
               </div>
 
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={onCheckout}
-                data-testid="button-checkout"
-              >
-                Checkout
-              </Button>
+              {isGuest ? (
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={() => setLocation('/login')}
+                  data-testid="button-login-to-checkout"
+                >
+                  <LogIn className="mr-2 h-5 w-5" />
+                  Login to Checkout
+                </Button>
+              ) : (
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={onCheckout || (() => setLocation('/checkout'))}
+                  data-testid="button-checkout"
+                >
+                  Proceed to Checkout
+                </Button>
+              )}
 
-              {subtotal < 200 && (
+              {totals.amountToFreeShipping > 0 && (
                 <p className="text-xs text-center text-muted-foreground">
-                  Add ${200 - subtotal} more for free shipping
+                  Add {formatPrice(totals.amountToFreeShipping)} more for free shipping
                 </p>
               )}
             </div>
+
+            {/* Recommendations Section */}
+            {recommendations && recommendations.length > 0 && (
+              <div className="p-6 border-t border-border bg-muted/20">
+                <h3 className="text-sm font-medium mb-4">Complete the Look</h3>
+                <div className="space-y-4">
+                  {recommendations.slice(0, 2).map((rec: any) => (
+                    <div key={rec.id} className="flex gap-3 items-center bg-background p-2 rounded-md border border-border">
+                      <div className="w-12 h-16 bg-muted rounded overflow-hidden flex-shrink-0">
+                        <img
+                          src={rec.images?.[0] || rec.signature_details?.image}
+                          alt={rec.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{rec.name}</p>
+                        <p className="text-xs text-muted-foreground">{formatPrice(rec.price)}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          addToCart.mutate({
+                            product_id: rec.id,
+                            quantity: 1
+                          });
+                        }}
+                        disabled={addToCart.isPending}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

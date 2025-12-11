@@ -1,0 +1,276 @@
+[
+  {
+    "id": "SEC-001",
+    "category": "Security",
+    "file": "server/index.ts",
+    "severity": "CRITICAL",
+    "summary": "Insecure Session Storage - MemoryStore unsuitable for production",
+    "description": "MemoryStore loses sessions on server restart and doesn't support horizontal scaling",
+    "suggestion": "Replace with connect-pg-simple or Redis session store",
+    "estimate_hrs": 4,
+    "status": "COMPLETED",
+    "resolution": "Replaced MemoryStore with connect-pg-simple PostgreSQL session store. Added session table migration and updated server configuration."
+  },
+  {
+    "id": "SEC-002",
+    "category": "Security",
+    "file": "server/index.ts",
+    "severity": "CRITICAL",
+    "summary": "Missing CSRF Protection",
+    "description": "No CSRF tokens implemented, vulnerable to cross-site attacks",
+    "suggestion": "Implement csurf middleware with CSRF tokens",
+    "estimate_hrs": 3,
+    "status": "COMPLETED",
+    "resolution": "Implemented csurf middleware with CSRF protection. Added CSRF token endpoint and updated API client to include tokens in state-changing requests."
+  },
+  {
+    "id": "SEC-003",
+    "category": "Security",
+    "file": "server/index.ts",
+    "severity": "CRITICAL",
+    "summary": "Weak Default Secrets",
+    "description": "Default session secret 'dev-secret' hardcoded, may be used in production",
+    "suggestion": "Enforce strong secret generation and fail startup if not set",
+    "estimate_hrs": 2,
+    "status": "COMPLETED",
+    "resolution": "Added comprehensive SESSION_SECRET validation at startup. Application now fails to start without a secure secret, validates length in production, and prevents common weak secrets."
+  },
+  {
+    "id": "SEC-004",
+    "category": "Security",
+    "file": "server/db/repositories/*.ts",
+    "severity": "CRITICAL",
+    "summary": "SQL Injection Risk",
+    "description": "Some queries use string concatenation without proper sanitization",
+    "suggestion": "Use parameterized queries exclusively with Drizzle ORM",
+    "estimate_hrs": 6,
+    "status": "COMPLETED",
+    "resolution": "Audited all database queries and replaced unsafe SQL template literals with parameterized operations. Added input validation to admin-notify endpoint. All database operations now use Drizzle ORM's built-in SQL injection protection."
+  },
+  {
+    "id": "SEC-005",
+    "category": "Security",
+    "file": "Multiple error handlers",
+    "severity": "HIGH",
+    "summary": "Sensitive Data Exposure in Error Messages",
+    "description": "Error messages expose database structure and internal details",
+    "suggestion": "Implement proper error sanitization and generic error messages",
+    "estimate_hrs": 4,
+    "status": "COMPLETED",
+    "resolution": "Created centralized error handling utilities with sanitization. Updated auth handlers and global error handler to prevent information leakage. Error messages now redact sensitive data and use consistent error codes."
+  },
+  {
+    "id": "SEC-006",
+    "category": "Security",
+    "file": "server/index.ts",
+    "severity": "HIGH",
+    "summary": "Missing Rate Limiting on Auth Endpoints",
+    "description": "Auth endpoints can be brute-forced with high request limits",
+    "suggestion": "Add specific rate limits to login/register endpoints",
+    "estimate_hrs": 2,
+    "status": "COMPLETED",
+    "resolution": "Added strict rate limiting to /api/auth/login and /api/auth/register endpoints. Limits to 5 attempts per 15 minutes in production, only counts failed attempts to avoid blocking legitimate users."
+  },
+  {
+    "id": "SEC-007",
+    "category": "Security",
+    "file": "server/orders.ts",
+    "severity": "HIGH",
+    "summary": "Incomplete Payment Verification",
+    "description": "Payment verification doesn't update order status or handle failures",
+    "suggestion": "Implement full payment flow with status updates and error handling",
+    "estimate_hrs": 6,
+    "status": "COMPLETED",
+    "resolution": "Implemented complete payment verification flow with signature validation, amount verification, order status updates, payment status tracking, and proper error handling. Orders now transition from pending to processing/paid status after successful payment."
+  },
+  {
+    "id": "SEC-008",
+    "category": "Security",
+    "file": "Multiple endpoints",
+    "severity": "HIGH",
+    "summary": "Missing Input Validation",
+    "description": "Many API endpoints lack comprehensive input validation",
+    "suggestion": "Add Zod validation schemas to all endpoints",
+    "estimate_hrs": 8
+  },
+  {
+    "id": "PERF-001",
+    "category": "Performance",
+    "file": "Database schema",
+    "severity": "MEDIUM",
+    "summary": "Missing Database Indexes",
+    "description": "Foreign keys and query fields lack indexes causing slow queries",
+    "suggestion": "Add indexes for all foreign keys and commonly queried fields",
+    "estimate_hrs": 3
+  },
+  {
+    "id": "QUAL-001",
+    "category": "Code Quality",
+    "file": "Entire backend",
+    "severity": "MEDIUM",
+    "summary": "No Logging Infrastructure",
+    "description": "Only console.log/error, no structured logging for production",
+    "suggestion": "Implement Winston or Pino logger with structured JSON output",
+    "estimate_hrs": 4
+  },
+  {
+    "id": "QUAL-002",
+    "category": "Code Quality",
+    "file": "server/cart.ts, server/orders.ts",
+    "severity": "MEDIUM",
+    "summary": "Inconsistent Error Handling",
+    "description": "Mix of try-catch patterns, some errors swallowed",
+    "suggestion": "Standardize error handling with proper logging and response formats",
+    "estimate_hrs": 4
+  },
+  {
+    "id": "QUAL-003",
+    "category": "Code Quality",
+    "file": "server/auth.ts, server/orders.ts",
+    "severity": "LOW",
+    "summary": "Console.log/error in Production Code",
+    "description": "15+ instances of console.error in production code",
+    "suggestion": "Replace with structured logging library",
+    "estimate_hrs": 2
+  },
+  {
+    "id": "QUAL-004",
+    "category": "Code Quality",
+    "file": "Repository implementations",
+    "severity": "MEDIUM",
+    "summary": "Missing Type Safety",
+    "description": "Use of 'any' types and unsafe type assertions",
+    "suggestion": "Replace any types with proper TypeScript interfaces",
+    "estimate_hrs": 6
+  },
+  {
+    "id": "FEAT-001",
+    "category": "Feature",
+    "file": "N/A",
+    "severity": "MEDIUM",
+    "summary": "Missing Product Search Functionality",
+    "description": "No search implemented for product catalog",
+    "suggestion": "Implement full-text search with PostgreSQL",
+    "estimate_hrs": 12
+  },
+  {
+    "id": "FEAT-002",
+    "category": "Feature",
+    "file": "N/A",
+    "severity": "MEDIUM",
+    "summary": "Missing Order Tracking",
+    "description": "No tracking number updates or status transitions",
+    "suggestion": "Implement order tracking system with status updates",
+    "estimate_hrs": 8
+  },
+  {
+    "id": "FEAT-003",
+    "category": "Feature",
+    "file": "N/A",
+    "severity": "MEDIUM",
+    "summary": "Missing Email Notifications",
+    "description": "No email service integration for orders and notifications",
+    "suggestion": "Add email service (SendGrid/SES) for order confirmations",
+    "estimate_hrs": 10
+  },
+  {
+    "id": "FEAT-004",
+    "category": "Feature",
+    "file": "N/A",
+    "severity": "LOW",
+    "summary": "Missing Product Reviews",
+    "description": "No review system for products",
+    "suggestion": "Add reviews and ratings schema with CRUD operations",
+    "estimate_hrs": 12
+  },
+  {
+    "id": "FEAT-005",
+    "category": "Feature",
+    "file": "N/A",
+    "severity": "LOW",
+    "summary": "Missing Wishlist Functionality",
+    "description": "No wishlist feature for users",
+    "suggestion": "Implement wishlist schema and UI components",
+    "estimate_hrs": 8
+  },
+  {
+    "id": "FEAT-006",
+    "category": "Feature",
+    "file": "N/A",
+    "severity": "MEDIUM",
+    "summary": "Incomplete Admin Category Management",
+    "description": "Only create and list operations, missing update/delete",
+    "suggestion": "Complete CRUD operations for category management",
+    "estimate_hrs": 4
+  },
+  {
+    "id": "DB-001",
+    "category": "Database",
+    "file": "Database schema",
+    "severity": "LOW",
+    "summary": "Missing Check Constraints",
+    "description": "No constraints for positive prices, quantities",
+    "suggestion": "Add check constraints for data integrity",
+    "estimate_hrs": 2
+  },
+  {
+    "id": "DB-002",
+    "category": "Database",
+    "file": "Database schema",
+    "severity": "LOW",
+    "summary": "No Soft Deletes",
+    "description": "Deletes are permanent, no audit trail",
+    "suggestion": "Add deleted_at timestamps for soft deletes",
+    "estimate_hrs": 4
+  },
+  {
+    "id": "DB-003",
+    "category": "Database",
+    "file": "Database schema",
+    "severity": "LOW",
+    "summary": "Missing Audit Trails",
+    "description": "No tracking of who changed what when",
+    "suggestion": "Add created_by, updated_by columns",
+    "estimate_hrs": 6
+  },
+  {
+    "id": "ERR-001",
+    "category": "Error Handling",
+    "file": "client/src/App.tsx",
+    "severity": "MEDIUM",
+    "summary": "Missing Error Boundary",
+    "description": "No global error boundary in React app",
+    "suggestion": "Add Error Boundary component for graceful error handling",
+    "estimate_hrs": 2
+  },
+  {
+    "id": "ERR-002",
+    "category": "Error Handling",
+    "file": "client/src/lib/api.ts",
+    "severity": "LOW",
+    "summary": "No Retry Logic",
+    "description": "Failed requests not retried automatically",
+    "suggestion": "Add exponential backoff retry logic",
+    "estimate_hrs": 3
+  },
+  {
+    "id": "TEST-001",
+    "category": "Testing",
+    "file": "N/A",
+    "severity": "MEDIUM",
+    "summary": "Missing Unit Tests for Business Logic",
+    "description": "Test files focus on API tests, missing unit tests",
+    "suggestion": "Add unit tests for repositories and utilities",
+    "estimate_hrs": 12
+  },
+  {
+    "id": "TEST-002",
+    "category": "Testing",
+    "file": "N/A",
+    "severity": "MEDIUM",
+    "summary": "Missing E2E Tests",
+    "description": "No end-to-end tests for critical user flows",
+    "suggestion": "Add E2E tests for checkout and admin operations",
+    "estimate_hrs": 12
+  }
+]

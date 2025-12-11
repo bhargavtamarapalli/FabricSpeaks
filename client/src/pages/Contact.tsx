@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ShoppingCart from "@/components/ShoppingCart";
@@ -9,70 +10,119 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
+import { motion } from "framer-motion";
 
 export default function Contact() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [cartItems] = useState<any[]>([]);
+  const [, setLocation] = useLocation();
+  const cartQuery = useCart();
+  const cartItems = cartQuery.data?.items || [];
+  const { login, register } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
       <Header
         cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
         onCartClick={() => setIsCartOpen(true)}
         onAuthClick={() => setIsAuthOpen(true)}
       />
 
-      <main className="flex-1 py-12 px-6">
-        <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h1 className="text-3xl font-light mb-8">Contact Us</h1>
+      <main className="flex-1 py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <span className="text-amber-600 font-bold uppercase text-sm mb-4 block tracking-[0.2em]">
+              Get in Touch
+            </span>
+            <h1 className="font-display text-5xl md:text-7xl mb-6 dark:text-white">
+              Contact Us
+            </h1>
+            <p className="text-neutral-500 dark:text-neutral-400 font-light text-lg max-w-2xl mx-auto">
+              We're here to assist you with any inquiries about our collections, sizing, or your order.
+            </p>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            <Card className="p-6 hover-elevate transition-all duration-300">
-              <Mail className="h-8 w-8 mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Email</h3>
-              <p className="text-sm text-muted-foreground">contact@atelier.com</p>
-            </Card>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="p-8 h-full border-none shadow-none bg-stone-50 dark:bg-neutral-900 flex flex-col items-center text-center hover:bg-stone-100 dark:hover:bg-neutral-800 transition-colors duration-300">
+                <Mail className="h-8 w-8 mb-6 text-amber-600" />
+                <h3 className="font-display text-xl mb-2 dark:text-white">Email</h3>
+                <p className="text-stone-600 dark:text-neutral-400 font-light">contact@fabricspeaks.com</p>
+              </Card>
+            </motion.div>
 
-            <Card className="p-6 hover-elevate transition-all duration-300">
-              <Phone className="h-8 w-8 mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Phone</h3>
-              <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card className="p-8 h-full border-none shadow-none bg-stone-50 dark:bg-neutral-900 flex flex-col items-center text-center hover:bg-stone-100 dark:hover:bg-neutral-800 transition-colors duration-300">
+                <Phone className="h-8 w-8 mb-6 text-amber-600" />
+                <h3 className="font-display text-xl mb-2 dark:text-white">Phone</h3>
+                <p className="text-stone-600 dark:text-neutral-400 font-light">+1 (212) 555-0123</p>
+              </Card>
+            </motion.div>
 
-            <Card className="p-6 hover-elevate transition-all duration-300 md:col-span-2">
-              <MapPin className="h-8 w-8 mb-4 text-primary" />
-              <h3 className="font-medium mb-2">Address</h3>
-              <p className="text-sm text-muted-foreground">123 Fashion Avenue, New York, NY 10001</p>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4 }}
+            >
+              <Card className="p-8 h-full border-none shadow-none bg-stone-50 dark:bg-neutral-900 flex flex-col items-center text-center hover:bg-stone-100 dark:hover:bg-neutral-800 transition-colors duration-300">
+                <MapPin className="h-8 w-8 mb-6 text-amber-600" />
+                <h3 className="font-display text-xl mb-2 dark:text-white">Address</h3>
+                <p className="text-stone-600 dark:text-neutral-400 font-light">123 Silk Road, Textile District<br />New York, NY 10013</p>
+              </Card>
+            </motion.div>
           </div>
 
-          <Card className="p-8">
-            <h2 className="text-2xl font-light mb-6">Send us a message</h2>
-            <form className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input id="name" data-testid="input-contact-name" />
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card className="p-8 md:p-12 border-none shadow-none bg-stone-50 dark:bg-neutral-900">
+              <h2 className="font-display text-3xl mb-8 dark:text-white text-center">Send us a message</h2>
+              <form className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="uppercase text-xs tracking-wider text-stone-500 dark:text-neutral-500">Name</Label>
+                    <Input id="name" data-testid="input-contact-name" className="bg-white dark:bg-neutral-800 border-stone-200 dark:border-neutral-700 focus-visible:ring-amber-600" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="uppercase text-xs tracking-wider text-stone-500 dark:text-neutral-500">Email</Label>
+                    <Input id="email" type="email" data-testid="input-contact-email" className="bg-white dark:bg-neutral-800 border-stone-200 dark:border-neutral-700 focus-visible:ring-amber-600" />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" data-testid="input-contact-email" />
+                  <Label htmlFor="subject" className="uppercase text-xs tracking-wider text-stone-500 dark:text-neutral-500">Subject</Label>
+                  <Input id="subject" data-testid="input-contact-subject" className="bg-white dark:bg-neutral-800 border-stone-200 dark:border-neutral-700 focus-visible:ring-amber-600" />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
-                <Input id="subject" data-testid="input-contact-subject" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
-                <Textarea id="message" rows={6} data-testid="input-contact-message" />
-              </div>
-              <Button className="w-full md:w-auto transition-all duration-200" data-testid="button-send-message">
-                Send Message
-              </Button>
-            </form>
-          </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="message" className="uppercase text-xs tracking-wider text-stone-500 dark:text-neutral-500">Message</Label>
+                  <Textarea id="message" rows={6} data-testid="input-contact-message" className="bg-white dark:bg-neutral-800 border-stone-200 dark:border-neutral-700 focus-visible:ring-amber-600 resize-none" />
+                </div>
+                <Button className="w-full md:w-auto px-8 py-6 bg-stone-900 dark:bg-white text-white dark:text-black hover:bg-stone-800 dark:hover:bg-neutral-200 transition-all duration-200 uppercase tracking-wider text-sm font-medium" data-testid="button-send-message">
+                  Send Message
+                </Button>
+              </form>
+            </Card>
+          </motion.div>
         </div>
       </main>
 
@@ -81,17 +131,30 @@ export default function Contact() {
       <ShoppingCart
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        items={cartItems}
-        onUpdateQuantity={() => {}}
-        onRemoveItem={() => {}}
-        onCheckout={() => console.log('Checkout clicked')}
+        onCheckout={() => setLocation('/checkout')}
       />
 
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onLogin={() => setIsAuthOpen(false)}
-        onRegister={() => setIsAuthOpen(false)}
+        onLogin={async (email, password) => {
+          try {
+            await login(email, password);
+            setIsAuthOpen(false);
+          } catch (e) {
+            console.error("Login failed:", e);
+            alert("Login failed. Please check your credentials.");
+          }
+        }}
+        onRegister={async (email, password, name) => {
+          try {
+            await register(email, password);
+            setIsAuthOpen(false);
+          } catch (e) {
+            console.error("Registration failed:", e);
+            alert("Registration failed. Please try again.");
+          }
+        }}
       />
     </div>
   );

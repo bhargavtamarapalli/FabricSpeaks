@@ -1,0 +1,273 @@
+import type { Request, Response } from "express";
+import { db } from "./db/supabase";
+import { products, insertProductSchema, categories, productVariants } from "../shared/schema";
+import { eq, ilike, or, desc, and, inArray, sql, count } from "drizzle-orm";
+import { z } from "zod";
+import { logAuditAction } from "./audit";
+
+// --- Types ---
+const adminListProductsQuerySchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+  search: z.string().optional(),
+  status: z.enum(['active', 'inactive', 'all']).default('all'),
+  categoryId: z.string().optional(),
+  sortBy: z.enum(['newest', 'price_asc', 'price_desc', 'name_asc']).default('newest'),
+});
+
+// --- Handlers ---
+
+/**
+ * GET /api/admin/products
+ * List products with search, filter, and pagination
+ */
+export async function getAdminProductsHandler(req: Request, res: Response) {
+  try {
+    const query = adminListProductsQuerySchema.parse(req.query);
+    const offset = (query.page - 1) * query.limit;
+
+    // Build conditions
+    const conditions = [];
+    
+    if (query.search) {
+      const searchTerm = `%${query.search}%`;
+      conditions.push(
+        or(
+          ilike(products.name, searchTerm),
+          ilike(products.sku, searchTerm),
+          ilike(products.description || '', searchTerm)
+        )
+      );
+    }
+
+    if (query.status !== 'all') {
+      conditions.push(eq(products.status, query.status));
+    }
+
+    if (query.categoryId) {
+      conditions.push(eq(products.category_id, query.categoryId));
+    }
+
+    // Build Sort
+    let orderBy;
+    switch (query.sortBy) {
+      case 'price_asc': orderBy = products.price; break;
+      case 'price_desc': orderBy = desc(products.price); break;
+      case 'name_asc': orderBy = products.name; break;
+      case 'newest': default: orderBy = desc(products.created_at); break;
+    }
+
+    // Execute Query
+    const [data, countResult] = await Promise.all([
+      db.select({
+        ...products,
+ */
+export async function getAdminProductHandler(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const [product] = await db
+      .select({
+        ...products,
+        category_name: categories.name
+      })
+      .from(products)
+      .leftJoin(categories, eq(products.category_id, categories.id))
+      .where(eq(products.id, id));
+
+    if (!product) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Product not found" });
+    }
+
+    // Fetch variants
+    const variantsList = await db
+      .select()
+      .from(productVariants)
+      .where(eq(productVariants.product_id, id));
+
+    return res.json({
+      ...product,
+      variants: variantsList
+    });
+
+  } catch (error) {
+    console.error("Get Product Error:", error);
+    return res.status(500).json({ code: "INTERNAL_ERROR", message: "Failed to fetch product" });
+  }
+}
+
+/**
+ * POST /api/admin/products
+ * Create a new product with validation
+ */
+export async function createAdminProductHandler(req: Request, res: Response) {
+  try {
+    // Separate variants from product data
+    const { variants, ...productData } = req.body;
+
+    // Validate body against Zod schema
+    const payload = insertProductSchema.parse(productData);
+
+    // Ensure slug is unique if provided, or generate one
+    if (!payload.slug) {
+      payload.slug = payload.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now();
+    }
+
+    const [created] = await db.insert(products).values(payload).returning();
+    
+    // Handle Variants
+    if (variants && Array.isArray(variants) && variants.length > 0) {
+      const variantsToInsert = variants.map((v: any) => ({
+        product_id: created.id,
+        size: v.size,
+        colour: v.color, // Frontend sends 'color', backend expects 'colour'
+        stock_quantity: Number(v.stock) || 0,
+        sku: v.sku || `${created.sku}-${v.size}-${v.color}`.toUpperCase(),
+        images: v.images || [], // Handle variant images
+        status: 'active'
+      }));
+      
+      await db.insert(productVariants).values(variantsToInsert);
+    }
+    
+    // Audit Log
+    await logAuditAction((req as any).user.user_id, 'create_product', 'product', created.id, payload, req);
+
+    return res.status(201).json(created);
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ code: "VALIDATION_ERROR", errors: error.errors });
+    }
+    console.error("Create Product Error:", error);
+    return res.status(500).json({ code: "INTERNAL_ERROR", message: "Failed to create product" });
+  }
+}
+
+export async function updateAdminProductHandler(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    console.log('[UPDATE PRODUCT] Request body:', JSON.stringify(req.body, null, 2));
+    
+    // Separate variants from product data
+    const { variants, ...productData } = req.body;
+
+    const payload = insertProductSchema.partial().parse(productData);
+
+    const [updated] = await db
+      .update(products)
+      .set({ ...payload, updated_at: new Date() })
+      .where(eq(products.id, id))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Product not found" });
+    }
+
+    // Handle Variants Update (Delete all and re-create)
+    if (variants && Array.isArray(variants)) {
+      // 1. Delete existing variants
+      await db.delete(productVariants).where(eq(productVariants.product_id, id));
+
+      // 2. Insert new variants
+      if (variants.length > 0) {
+        const variantsToInsert = variants.map((v: any) => ({
+          product_id: id,
+          size: v.size,
+          colour: v.color, // Frontend sends 'color', backend expects 'colour'
+          stock_quantity: Number(v.stock) || 0,
+          sku: v.sku || `${updated.sku}-${v.size}-${v.color}`.toUpperCase(),
+          images: v.images || [], // Handle variant images
+          status: 'active'
+        }));
+        
+        await db.insert(productVariants).values(variantsToInsert);
+      }
+    }
+
+    // Audit Log
+    await logAuditAction((req as any).user.user_id, 'update_product', 'product', id, payload, req);
+
+    return res.json(updated);
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error('[UPDATE PRODUCT] Validation errors:', JSON.stringify(error.errors, null, 2));
+      return res.status(400).json({ 
+        code: "VALIDATION_ERROR", 
+        message: "Validation failed",
+        errors: error.errors 
+      });
+    }
+    console.error("Update Product Error:", error);
+    return res.status(500).json({ code: "INTERNAL_ERROR", message: "Failed to update product" });
+  }
+}
+
+/**
+ * DELETE /api/admin/products/:id
+ * Delete a product
+ */
+export async function deleteAdminProductHandler(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+    
+    const [deleted] = await db
+      .delete(products)
+      .where(eq(products.id, id))
+      .returning();
+
+    if (!deleted) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Product not found" });
+    }
+
+    // Audit Log
+    await logAuditAction((req as any).user.user_id, 'delete_product', 'product', id, {}, req);
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Delete Product Error:", error);
+    return res.status(500).json({ code: "INTERNAL_ERROR", message: "Failed to delete product" });
+  }
+}
+
+/**
+ * POST /api/admin/products/bulk-status
+ * Bulk update product status
+ */
+export async function bulkUpdateProductStatusHandler(req: Request, res: Response) {
+  try {
+    const schema = z.object({
+      productIds: z.array(z.string().uuid()),
+      status: z.enum(['active', 'inactive'])
+    });
+
+    const { productIds, status } = schema.parse(req.body);
+
+    if (productIds.length === 0) {
+      return res.json({ updatedCount: 0 });
+    }
+
+    const result = await db
+      .update(products)
+      .set({ status, updated_at: new Date() })
+      .where(inArray(products.id, productIds))
+      .returning({ id: products.id });
+
+    // Audit Log
+    await logAuditAction((req as any).user.user_id, 'bulk_update_product_status', 'product', 'bulk', { productIds, status }, req);
+
+    return res.json({ 
+      success: true, 
+      updatedCount: result.length,
+      message: `Updated ${result.length} products to ${status}`
+    });
+
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ code: "VALIDATION_ERROR", errors: error.errors });
+    }
+    console.error("Bulk Status Update Error:", error);
+    return res.status(500).json({ code: "INTERNAL_ERROR", message: "Failed to update products" });
+  }
+}

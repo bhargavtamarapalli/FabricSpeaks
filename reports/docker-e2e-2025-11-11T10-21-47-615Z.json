@@ -1,0 +1,13 @@
+{
+  "run": "docker-e2e",
+  "start": "2025-11-11T10:21:13.824Z",
+  "end": "2025-11-11T10:21:47.615Z",
+  "dbRunning": true,
+  "dbReachable": true,
+  "seedOk": false,
+  "devOk": false,
+  "devSpawned": true,
+  "results": [],
+  "dbChecks": [],
+  "cleanupOk": false
+}
