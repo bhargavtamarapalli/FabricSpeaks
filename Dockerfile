@@ -1,16 +1,23 @@
 FROM node:20-bullseye
 
-# Install psql client
+# Install psql client (useful for migrations/backups)
 RUN apt-get update && apt-get install -y postgresql-client curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/app
 
-COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install ALL dependencies (including dev for building)
+RUN npm install
 
 # Copy rest of the app
 COPY . ./
 
+# Build the frontend and backend
+RUN npm run build
+
 EXPOSE 5000
 
-CMD ["sh", "-c", "until pg_isready -h db -p 5432; do sleep 1; done; psql $DATABASE_URL -f /srv/app/supabase/migrations/20251101182524_unified_schema_additions.sql || true; npm run dev"]
+# Start with production command
+CMD ["npm", "run", "start"]

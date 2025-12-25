@@ -1,11 +1,9 @@
 services:
   - type: web
     name: fabric-speaks
-    env: node
+    env: docker
     plan: free
     region: singapore # Change this in the Dashboard if you prefer US/EU
-    buildCommand: npm install && npm run build
-    startCommand: npm run start
     envVars:
       - key: NODE_ENV
         value: production
