@@ -12,7 +12,7 @@ import { Request, Response, NextFunction } from 'express';
  */
 const cspDirectives = {
   defaultSrc: ["'self'"],
-  
+
   // Scripts: Allow self and specific trusted sources
   scriptSrc: [
     "'self'",
@@ -21,14 +21,14 @@ const cspDirectives = {
     'https://checkout.razorpay.com', // Razorpay payment gateway
     'https://cdn.jsdelivr.net', // CDN for libraries
   ],
-  
+
   // Styles: Allow self and inline styles
   styleSrc: [
     "'self'",
     "'unsafe-inline'", // Required for styled-components and CSS-in-JS
     'https://fonts.googleapis.com', // Google Fonts
   ],
-  
+
   // Images: Allow self, data URIs, and CDNs
   imgSrc: [
     "'self'",
@@ -37,47 +37,49 @@ const cspDirectives = {
     'https:', // Allow all HTTPS images (for product images from various sources)
     'https://res.cloudinary.com', // Cloudinary CDN
   ],
-  
+
   // Fonts: Allow self and Google Fonts
   fontSrc: [
     "'self'",
     'data:',
     'https://fonts.gstatic.com',
   ],
-  
+
   // Connect: API endpoints and external services
   connectSrc: [
     "'self'",
     'https://api.razorpay.com', // Razorpay API
+    'https://fonts.googleapis.com', // Google Fonts CSS fetch
+    'https://fonts.gstatic.com', // Font files
+    'https://*.supabase.co', // Supabase API
     process.env.SUPABASE_URL || '', // Supabase API
-    process.env.REDIS_URL || '', // Redis (if using)
   ].filter(Boolean), // Remove empty strings
-  
+
   // Frames: Razorpay payment iframe
   frameSrc: [
     "'self'",
     'https://api.razorpay.com',
     'https://checkout.razorpay.com',
   ],
-  
+
   // Objects: Disallow plugins
   objectSrc: ["'none'"],
-  
+
   // Media: Allow self
   mediaSrc: ["'self'"],
-  
+
   // Workers: Allow self
   workerSrc: ["'self'", 'blob:'],
-  
+
   // Forms: Only allow posting to self
   formAction: ["'self'"],
-  
+
   // Frame ancestors: Prevent clickjacking
   frameAncestors: ["'none'"],
-  
+
   // Base URI: Restrict base tag
   baseUri: ["'self'"],
-  
+
   // Upgrade insecure requests in production
   ...(process.env.NODE_ENV === 'production' && {
     upgradeInsecureRequests: [],
@@ -155,13 +157,13 @@ export function additionalSecurityHeaders(
     ].join(', ')
   );
 
-  // Cross-Origin policies - only in production
-  // These are too strict for Vite development mode
+  // Cross-Origin policies - relaxed for compatibility with Razorpay and other external scripts
   if (process.env.NODE_ENV === 'production') {
-    res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
-    
+    // COEP 'require-corp' blocks external scripts like Razorpay
+    res.setHeader('Cross-Origin-Embedder-Policy', 'credentialless');
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+
     // Expect-CT (Certificate Transparency)
     res.setHeader('Expect-CT', 'max-age=86400, enforce');
   }
@@ -176,7 +178,7 @@ export function additionalSecurityHeaders(
 export function cspViolationReporter(req: Request, res: Response): void {
   if (req.body && req.body['csp-report']) {
     const report = req.body['csp-report'];
-    
+
     console.error('CSP Violation:', {
       documentUri: report['document-uri'],
       violatedDirective: report['violated-directive'],

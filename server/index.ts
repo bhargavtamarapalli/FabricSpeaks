@@ -126,8 +126,10 @@ if (process.env.NODE_ENV === 'development') {
           connectSrc: [
             "'self'",
             "https://checkout.razorpay.com",
-            "https://*.supabase.co",
             "https://api.razorpay.com",
+            "https://*.supabase.co",
+            "https://fonts.googleapis.com",
+            "https://fonts.gstatic.com",
             "wss://*.supabase.co"
           ],
           frameSrc: [
