@@ -1,4 +1,4 @@
-import { ShoppingBag, Search, User, Heart } from "lucide-react";
+import { ShoppingBag, Search, User, Heart, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -7,6 +7,15 @@ import { Link, useLocation } from "wouter";
 import ThemeToggle from "./ThemeToggle";
 import FabricSpeaksLogoV4 from "./FabricSpeaksLogoV4";
 import MobileMenu from "./MobileMenu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   cartItemCount?: number;
@@ -16,28 +25,29 @@ interface HeaderProps {
 
 export default function Header({ cartItemCount = 0, onCartClick, onAuthClick }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const isAdmin = user?.role === "admin";
 
   return (
     <header className="sticky top-0 z-50 matte-effect w-full">
       <div className="w-full">
-        <div className="flex items-center justify-between h-20 md:h-32 pl-4 pr-6 md:pr-12">
+        <div className="flex items-center justify-between h-20 md:h-24 px-6 md:px-12 transition-all duration-300">
           {/* Mobile Menu Trigger */}
           <div className="lg:hidden">
             <MobileMenu onCartOpen={onCartClick} onAuthClick={onAuthClick} />
           </div>
 
           <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setLocation("/")}>
-            <div className="relative w-16 h-16 md:w-28 md:h-28 transition-transform duration-500 group-hover:scale-110">
+            <div className="relative w-12 h-12 md:w-14 md:h-14 transition-transform duration-500 group-hover:scale-110">
               <FabricSpeaksLogoV4 className="w-full h-full text-black dark:text-white" />
             </div>
             <div className="flex flex-col justify-center">
-              <h1 className="font-display text-xl md:text-3xl tracking-tight text-black dark:text-white leading-none group-hover:text-amber-600 transition-colors duration-300">
+              <h1 className="font-display text-lg md:text-2xl tracking-tight text-black dark:text-white leading-none group-hover:text-amber-600 transition-colors duration-300">
                 Fabric Speaks
               </h1>
-              <span className="hidden md:block text-xs tracking-[0.3em] uppercase text-neutral-500 dark:text-neutral-400 group-hover:tracking-[0.4em] transition-all duration-500">
+              <span className="hidden md:block text-[10px] tracking-[0.3em] uppercase text-neutral-500 dark:text-neutral-400 group-hover:tracking-[0.4em] transition-all duration-500">
                 Est. 2024
               </span>
             </div>
@@ -45,18 +55,19 @@ export default function Header({ cartItemCount = 0, onCartClick, onAuthClick }: 
 
           <nav className="hidden lg:flex items-center gap-8">
             <Link href="/clothing" data-testid="link-clothing">
-              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200">
+              <span className="text-xs md:text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200">
                 Clothing
               </span>
             </Link>
             <Link href="/accessories" data-testid="link-accessories">
-              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200">
+              <span className="text-xs md:text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200">
                 Accessories
               </span>
             </Link>
             <Link href="/signature-collection" data-testid="link-signature">
-              <span className="text-sm uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-2 rounded-md transition-all duration-200 text-amber-700 font-semibold">
-                Signature Collection
+              <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest hover-elevate active-elevate-2 px-4 py-1 rounded-md transition-all duration-200 text-amber-700 flex flex-col items-center leading-tight text-center">
+                <span>Signature</span>
+                <span>Collection</span>
               </span>
             </Link>
             <Link href="/fabrics" data-testid="link-fabrics">
@@ -102,25 +113,62 @@ export default function Header({ cartItemCount = 0, onCartClick, onAuthClick }: 
               </Button>
             </Link>
 
-            <Button
-              size="icon"
-              variant="ghost"
-              data-testid="button-account"
-              onClick={() => {
-                if (user) {
-                  setLocation("/profile");
-                } else {
-                  onAuthClick?.();
-                }
-              }}
-              className="hidden md:flex transition-all duration-200"
-              title={isAdmin ? "Admin Account" : undefined}
-            >
-              <User className="h-5 w-5" />
-              {isAdmin && (
-                <span className="absolute -top-1 -left-1 px-1 py-0.5 text-[10px] rounded bg-yellow-100 text-yellow-800 border border-yellow-300">Admin</span>
-              )}
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    data-testid="button-account-menu"
+                    className="hidden md:flex transition-all duration-200"
+                    title={isAdmin ? "Admin Account" : "My Account"}
+                  >
+                    <User className="h-5 w-5" />
+                    {isAdmin && (
+                      <span className="absolute -top-1 -left-1 px-1 py-0.5 text-[10px] rounded bg-yellow-100 text-yellow-800 border border-yellow-300">Admin</span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setLocation("/profile")} className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" /> Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLocation("/orders")} className="cursor-pointer">
+                    <ShoppingBag className="mr-2 h-4 w-4" /> My Orders
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setLocation("/wishlist")} className="cursor-pointer">
+                    <Heart className="mr-2 h-4 w-4" /> Wishlist
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await logout();
+                      toast({
+                        title: "Logged out",
+                        description: "You have been successfully logged out.",
+                      });
+                      setLocation("/");
+                    }}
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button
+                size="icon"
+                variant="ghost"
+                data-testid="button-account-login"
+                onClick={onAuthClick}
+                className="hidden md:flex transition-all duration-200"
+                title="Sign In"
+              >
+                <User className="h-5 w-5" />
+              </Button>
+            )}
 
             <Button
               size="icon"

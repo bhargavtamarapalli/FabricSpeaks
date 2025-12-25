@@ -1,30 +1,13 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ShoppingCart from "@/components/ShoppingCart";
-import AuthModal from "@/components/AuthModal";
+import PageLayout from "@/components/PageLayout";
 import { Card } from "@/components/ui/card";
-import { useCart } from "@/hooks/useCart";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function About() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [, setLocation] = useLocation();
-  const cartQuery = useCart();
-  const cartItems = cartQuery.data?.items || [];
-  const { login, register } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
-      <Header
-        cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-        onCartClick={() => setIsCartOpen(true)}
-        onAuthClick={() => setIsAuthOpen(true)}
-      />
-
+    <PageLayout className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
       <main className="flex-1 py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <motion.div
@@ -116,37 +99,6 @@ export default function About() {
           </div>
         </div >
       </main >
-
-      <Footer />
-
-      <ShoppingCart
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        onCheckout={() => setLocation('/checkout')}
-      />
-
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onLogin={async (email, password) => {
-          try {
-            await login(email, password);
-            setIsAuthOpen(false);
-          } catch (e) {
-            console.error("Login failed:", e);
-            alert("Login failed. Please check your credentials.");
-          }
-        }}
-        onRegister={async (email, password, name) => {
-          try {
-            await register(email, password);
-            setIsAuthOpen(false);
-          } catch (e) {
-            console.error("Registration failed:", e);
-            alert("Registration failed. Please try again.");
-          }
-        }}
-      />
-    </div >
+    </PageLayout >
   );
 }

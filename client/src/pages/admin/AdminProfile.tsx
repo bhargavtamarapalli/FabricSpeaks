@@ -114,24 +114,24 @@ export default function AdminProfile() {
 
             <div className="space-y-6 max-w-4xl mx-auto">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">My Profile</h1>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <h1 className="text-3xl font-bold text-foreground">My Profile</h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
                         Manage your personal information and security settings.
                     </p>
                 </div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="border-slate-800 bg-slate-900/50">
+                    <TabsList className="border-border bg-muted/50">
                         <TabsTrigger
                             value="profile"
-                            className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                         >
                             <User className="mr-2 h-4 w-4" />
                             Profile Details
                         </TabsTrigger>
                         <TabsTrigger
                             value="security"
-                            className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+                            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
                         >
                             <Shield className="mr-2 h-4 w-4" />
                             Security
@@ -139,54 +139,54 @@ export default function AdminProfile() {
                     </TabsList>
 
                     <TabsContent value="profile">
-                        <Card className="border-slate-800 bg-slate-900/50">
+                        <Card className="border-border bg-card">
                             <CardHeader>
-                                <CardTitle className="text-white">Personal Information</CardTitle>
-                                <CardDescription className="text-slate-400">
+                                <CardTitle className="text-foreground">Personal Information</CardTitle>
+                                <CardDescription className="text-muted-foreground">
                                     Update your personal details.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="username" className="text-slate-300">Username</Label>
+                                        <Label htmlFor="username" className="text-foreground">Username</Label>
                                         <Input
                                             id="username"
                                             value={user?.username || ''}
                                             disabled
-                                            className="bg-slate-950 border-slate-800 text-slate-500"
+                                            className="bg-muted border-border text-muted-foreground"
                                         />
-                                        <p className="text-xs text-slate-500">Username cannot be changed.</p>
+                                        <p className="text-xs text-muted-foreground">Username cannot be changed.</p>
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="full_name" className="text-slate-300">Full Name</Label>
+                                        <Label htmlFor="full_name" className="text-foreground">Full Name</Label>
                                         <Input
                                             id="full_name"
                                             name="full_name"
                                             defaultValue={(user as any)?.full_name || ''}
-                                            className="bg-slate-950 border-slate-800 text-white focus:border-indigo-500"
+                                            className="bg-background border-border text-foreground"
                                         />
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="email" className="text-slate-300">Email</Label>
+                                        <Label htmlFor="email" className="text-foreground">Email</Label>
                                         <Input
                                             id="email"
                                             name="email"
                                             type="email"
                                             defaultValue={(user as any)?.email || ''}
-                                            className="bg-slate-950 border-slate-800 text-white focus:border-indigo-500"
+                                            className="bg-background border-border text-foreground"
                                         />
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="phone" className="text-slate-300">Phone</Label>
+                                        <Label htmlFor="phone" className="text-foreground">Phone</Label>
                                         <Input
                                             id="phone"
                                             name="phone"
                                             defaultValue={user?.phone || ''}
-                                            className="bg-slate-950 border-slate-800 text-white focus:border-indigo-500"
+                                            className="bg-background border-border text-foreground"
                                         />
                                     </div>
 
@@ -194,7 +194,7 @@ export default function AdminProfile() {
                                         <Button
                                             type="submit"
                                             disabled={updateMe.isPending}
-                                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                         >
                                             {updateMe.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                             <Save className="mr-2 h-4 w-4" />
@@ -207,35 +207,35 @@ export default function AdminProfile() {
                     </TabsContent>
 
                     <TabsContent value="security">
-                        <Card className="border-slate-800 bg-slate-900/50">
+                        <Card className="border-border bg-card">
                             <CardHeader>
-                                <CardTitle className="text-white">Change Password</CardTitle>
-                                <CardDescription className="text-slate-400">
+                                <CardTitle className="text-foreground">Change Password</CardTitle>
+                                <CardDescription className="text-muted-foreground">
                                     Ensure your account is using a long, random password to stay secure.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <form onSubmit={handlePasswordUpdate} className="space-y-4">
                                     <div className="grid gap-2">
-                                        <Label htmlFor="newPassword" className="text-slate-300">New Password</Label>
+                                        <Label htmlFor="newPassword" className="text-foreground">New Password</Label>
                                         <Input
                                             id="newPassword"
                                             type="password"
                                             value={passwordData.newPassword}
                                             onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                                            className="bg-slate-950 border-slate-800 text-white focus:border-indigo-500"
+                                            className="bg-background border-border text-foreground"
                                             placeholder="Min. 8 characters"
                                         />
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="confirmPassword" className="text-slate-300">Confirm Password</Label>
+                                        <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
                                         <Input
                                             id="confirmPassword"
                                             type="password"
                                             value={passwordData.confirmPassword}
                                             onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                                            className="bg-slate-950 border-slate-800 text-white focus:border-indigo-500"
+                                            className="bg-background border-border text-foreground"
                                             placeholder="Re-enter new password"
                                         />
                                     </div>
@@ -244,7 +244,7 @@ export default function AdminProfile() {
                                         <Button
                                             type="submit"
                                             disabled={updatePasswordMutation.isPending}
-                                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                         >
                                             {updatePasswordMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                             <Shield className="mr-2 h-4 w-4" />

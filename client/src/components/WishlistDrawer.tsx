@@ -11,6 +11,7 @@ import { X, ShoppingCart, Trash2, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useDefaultWishlist, useWishlist, useRemoveFromWishlist } from "@/hooks/useWishlist";
 import { useAddToCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,7 +25,8 @@ interface WishlistDrawerProps {
  */
 export default function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
     const { toast } = useToast();
-    const { data: defaultWishlist } = useDefaultWishlist();
+    const { user } = useAuth();
+    const { data: defaultWishlist } = useDefaultWishlist({ enabled: !!user });
     const { data: wishlistData, isLoading } = useWishlist(defaultWishlist?.id);
     const removeFromWishlist = useRemoveFromWishlist();
     const addToCart = useAddToCart();

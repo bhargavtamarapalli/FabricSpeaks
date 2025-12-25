@@ -68,6 +68,142 @@ const contentSchema = z.object({
 
 type ContentFormValues = z.infer<typeof contentSchema>;
 
+// Link Builder Component for friendly URL construction
+function LinkBuilder({ value, onChange }: { value: string, onChange: (val: string) => void }) {
+    const [linkType, setLinkType] = useState<'custom' | 'product' | 'collection' | 'page'>('custom');
+    const [param, setParam] = useState('');
+
+    // Pre-parse existing value to set initial state
+    useEffect(() => {
+        if (!value) return;
+        if (value.startsWith('/product/')) {
+            setLinkType('product');
+            setParam(value.replace('/product/', ''));
+        } else if (value.startsWith('/clothing?fabric=')) {
+            setLinkType('collection');
+            setParam(value.replace('/clothing?fabric=', ''));
+        } else if (['/sale', '/new-arrivals', '/clothing', '/about', '/contact'].includes(value)) {
+            setLinkType('page');
+            setParam(value);
+        } else {
+            setLinkType('custom');
+        }
+    }, []); // Run once on mount? Or when value changes externally? 
+    // Actually, running only on mount is safer to avoid loop, but let's watch 'value' ONLY if it changes from outside (not from our own storage).
+    // For now, simple state is enough.
+
+    const { data: products } = useQuery({
+        queryKey: ['admin', 'products-list'],
+        queryFn: async () => {
+            const res = await adminApi.product.getProducts({ limit: 100 });
+            return res.data || [];
+        },
+        enabled: linkType === 'product'
+    });
+
+    // Update parent when local state changes
+    useEffect(() => {
+        if (linkType === 'custom') {
+            // Check if param is different from value before calling onChange to avoid loop?
+            // Actually, for custom, the input directly calls onChange, so we don't need this effect to sync 'param' to 'value' 
+            // EXCEPT if we switched TO custom from something else.
+            // Let's handle updates explicitly in handlers.
+        } else if (linkType === 'product' && param) {
+            onChange(`/product/${param}`);
+        } else if (linkType === 'collection' && param) {
+            onChange(`/clothing?fabric=${param}`);
+        } else if (linkType === 'page' && param) {
+            onChange(param);
+        }
+    }, [linkType, param]);
+
+    const staticPages = [
+        { label: "Sale", value: "/sale" },
+        { label: "New Arrivals", value: "/new-arrivals" },
+        { label: "All Clothing", value: "/clothing" },
+        { label: "Fabrics Info", value: "/fabrics" },
+    ];
+
+    const fabrics = ["Cotton", "Linen", "Wool", "Silk", "Polyester", "Denim", "Leather"];
+
+    return (
+        <div className="space-y-3 p-3 border border-border rounded-md bg-muted/30">
+            <FormLabel>Link Destination</FormLabel>
+            <Select
+                value={linkType}
+                onValueChange={(v: any) => {
+                    setLinkType(v);
+                    setParam(''); // Reset param on type change
+                    if (v === 'custom') onChange('');
+                }}
+            >
+                <SelectTrigger>
+                    <SelectValue placeholder="Select link type" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="custom">Custom URL</SelectItem>
+                    <SelectItem value="product">Specific Product</SelectItem>
+                    <SelectItem value="collection">Fabric Collection</SelectItem>
+                    <SelectItem value="page">Static Page</SelectItem>
+                </SelectContent>
+            </Select>
+
+            {linkType === 'custom' && (
+                <Input
+                    placeholder="/path/to/page"
+                    value={value || ''}
+                    onChange={(e) => onChange(e.target.value)}
+                />
+            )}
+
+            {linkType === 'product' && (
+                <Select value={param} onValueChange={setParam}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a product" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[200px]">
+                        {products?.map(p => (
+                            <SelectItem key={p.id} value={p.id}>
+                                {p.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
+
+            {linkType === 'collection' && (
+                <Select value={param} onValueChange={setParam}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select fabric" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {fabrics.map(f => (
+                            <SelectItem key={f} value={f}>{f}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
+
+            {linkType === 'page' && (
+                <Select value={param} onValueChange={setParam}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select page" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {staticPages.map(p => (
+                            <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
+
+            <p className="text-xs text-muted-foreground mt-1">
+                Preview: <span className="font-mono">{value || '(none)'}</span>
+            </p>
+        </div>
+    );
+}
+
 export default function Content() {
     const { toast } = useToast();
     const queryClient = useQueryClient();
@@ -229,10 +365,10 @@ export default function Content() {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">Content Management</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">Manage banners, polls, and blogs.</p>
+                        <h1 className="admin-page-title">Content Management</h1>
+                        <p className="admin-page-subtitle">Manage banners, polls, and blogs.</p>
                     </div>
-                    <Button onClick={() => setIsDialogOpen(true)} className="bg-primary hover:bg-primary/90">
+                    <Button onClick={() => setIsDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm">
                         <Plus className="mr-2 h-4 w-4" />
                         Add Content
                     </Button>
@@ -241,7 +377,7 @@ export default function Content() {
                 <Dialog open={isDialogOpen} onOpenChange={(open) => !open && handleCloseDialog()}>
                     <DialogContent className="bg-background border-border text-foreground max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                            <DialogTitle>{editingId ? "Edit Content" : "Add New Content"}</DialogTitle>
+                            <DialogTitle className="text-xl font-bold text-foreground">{editingId ? "Edit Content" : "Add New Content"}</DialogTitle>
                         </DialogHeader>
                         <Form {...form}>
                             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -301,7 +437,7 @@ export default function Content() {
 
                                 {/* Banner Specific Fields */}
                                 {watchType === 'banner' && (
-                                    <div className="space-y-4 border-l-2 border-indigo-500 pl-4 py-2">
+                                    <div className="space-y-4 border-l-2 border-primary pl-4 py-2">
                                         <div className="grid grid-cols-2 gap-4">
                                             <FormField
                                                 control={form.control}
@@ -401,9 +537,11 @@ export default function Content() {
                                                 name="ctaLink"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel>Button Link</FormLabel>
                                                         <FormControl>
-                                                            <Input {...field} className="bg-background border-input" placeholder="/shop" />
+                                                            <LinkBuilder
+                                                                value={field.value || ''}
+                                                                onChange={field.onChange}
+                                                            />
                                                         </FormControl>
                                                         <FormMessage />
                                                     </FormItem>
@@ -414,7 +552,7 @@ export default function Content() {
                                 )}
 
                                 {watchType === 'poll' && (
-                                    <div className="space-y-4 border-l-2 border-indigo-500 pl-4">
+                                    <div className="space-y-4 border-l-2 border-primary pl-4">
                                         <FormField
                                             control={form.control}
                                             name="question"
@@ -570,7 +708,7 @@ export default function Content() {
                                     control={form.control}
                                     name="is_active"
                                     render={({ field }) => (
-                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border border-slate-800 p-4">
+                                        <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-4 bg-muted/10">
                                             <div className="space-y-0.5">
                                                 <FormLabel className="text-base">Active Status</FormLabel>
                                                 <FormDescription>
@@ -588,10 +726,10 @@ export default function Content() {
                                 />
 
                                 <div className="flex justify-end gap-2 pt-4">
-                                    <Button type="button" variant="outline" onClick={handleCloseDialog} className="border-slate-700 hover:bg-slate-800 text-white">
+                                    <Button type="button" variant="outline" onClick={handleCloseDialog} className="border-border text-muted-foreground hover:bg-muted hover:text-foreground font-bold">
                                         Cancel
                                     </Button>
-                                    <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
+                                    <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm">
                                         {editingId ? 'Update Content' : 'Create Content'}
                                     </Button>
                                 </div>

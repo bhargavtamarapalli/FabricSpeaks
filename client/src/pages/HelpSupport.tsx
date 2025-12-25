@@ -1,34 +1,20 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ShoppingCart from "@/components/ShoppingCart";
-import AuthModal from "@/components/AuthModal";
-import { useAuth } from "@/hooks/useAuth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Mail, Phone, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { useCart } from "@/hooks/useCart";
+import PageLayout from "@/components/PageLayout";
+import { useToast } from "@/hooks/use-toast";
+import { api } from "@/lib/api";
 
 export default function HelpSupport() {
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [, setLocation] = useLocation();
-    const cartQuery = useCart();
-    const cartItems = cartQuery.data?.items || [];
-    const { login, register } = useAuth();
+    const { toast } = useToast();
 
     return (
-        <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
-            <Header
-                cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                onCartClick={() => setIsCartOpen(true)}
-                onAuthClick={() => setIsAuthOpen(true)}
-            />
-
+        <PageLayout className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
             <main className="flex-1 py-16 px-6">
                 <div className="max-w-3xl mx-auto">
                     <motion.div
@@ -110,21 +96,47 @@ export default function HelpSupport() {
                                     </div>
                                 </div>
 
-                                <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                                <form className="space-y-4" onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    const formData = new FormData(e.target as HTMLFormElement);
+                                    const name = formData.get('name');
+                                    const email = formData.get('email');
+                                    const message = formData.get('message');
+
+                                    if (!name || !email || !message) {
+                                        toast({ variant: "destructive", title: "Missing fields", description: "Please fill in all required fields." });
+                                        return;
+                                    }
+
+                                    try {
+                                        await api.post('/api/contact', Object.fromEntries(formData));
+                                        toast({ title: "Message sent!", description: "Thank you for contacting support! We will respond within 24 hours." });
+                                        (e.target as HTMLFormElement).reset();
+                                    } catch (err) {
+                                        console.error(err);
+                                        toast({ variant: "destructive", title: "Failed to send", description: "Please try again later." });
+                                    }
+                                }}>
                                     <Input
+                                        name="name"
                                         placeholder="Your Name"
                                         className="bg-white dark:bg-neutral-900 border-stone-200 dark:border-neutral-800 focus-visible:ring-amber-600"
+                                        required
                                     />
                                     <Input
+                                        name="email"
                                         type="email"
                                         placeholder="Your Email"
                                         className="bg-white dark:bg-neutral-900 border-stone-200 dark:border-neutral-800 focus-visible:ring-amber-600"
+                                        required
                                     />
                                     <Textarea
+                                        name="message"
                                         placeholder="How can we help you?"
                                         className="min-h-[120px] bg-white dark:bg-neutral-900 border-stone-200 dark:border-neutral-800 focus-visible:ring-amber-600"
+                                        required
                                     />
-                                    <Button className="w-full bg-stone-900 dark:bg-white text-white dark:text-black hover:bg-stone-800 dark:hover:bg-neutral-200">
+                                    <Button type="submit" className="w-full bg-stone-900 dark:bg-white text-white dark:text-black hover:bg-stone-800 dark:hover:bg-neutral-200">
                                         Send Message
                                     </Button>
                                 </form>
@@ -133,37 +145,6 @@ export default function HelpSupport() {
                     </motion.div>
                 </div>
             </main>
-
-            <Footer />
-
-            <ShoppingCart
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                onCheckout={() => setLocation('/checkout')}
-            />
-
-            <AuthModal
-                isOpen={isAuthOpen}
-                onClose={() => setIsAuthOpen(false)}
-                onLogin={async (email, password) => {
-                    try {
-                        await login(email, password);
-                        setIsAuthOpen(false);
-                    } catch (e) {
-                        console.error("Login failed:", e);
-                        alert("Login failed. Please check your credentials.");
-                    }
-                }}
-                onRegister={async (email, password, name) => {
-                    try {
-                        await register(email, password);
-                        setIsAuthOpen(false);
-                    } catch (e) {
-                        console.error("Registration failed:", e);
-                        alert("Registration failed. Please try again.");
-                    }
-                }}
-            />
-        </div>
+        </PageLayout>
     );
 }

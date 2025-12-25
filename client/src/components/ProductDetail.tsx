@@ -16,10 +16,12 @@
  */
 
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { VariantSelector } from "@/components/VariantSelector";
+import { WishlistButton } from "@/components/WishlistButton";
 import { calculateVariantPrice, checkVariantAvailability, type ProductVariant } from "@/hooks/useProductVariants";
 import { Product } from "../../../shared/schema";
 import { ShoppingBag, Truck } from "lucide-react";
@@ -28,7 +30,7 @@ import { FREE_SHIPPING_THRESHOLD, CURRENCY_SYMBOL } from "@/lib/constants";
 
 interface ProductDetailProps {
   product: Product;
-  onAddToCart: (variantId: string, price: number) => void;
+  onAddToCart: (variantId: string, price: number, size?: string, colour?: string) => void;
 }
 
 /**
@@ -41,7 +43,13 @@ export default function ProductDetail({
   onAddToCart,
 }: ProductDetailProps) {
   const { toast } = useToast();
-  const { brand, name, price, sale_price, description, images, color_images } = product;
+  const [location] = useLocation();
+  const { brand, name, price, sale_price, description, images, color_images, main_image } = product;
+
+  // Read query parameters for initial variant selection (from cart navigation)
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const initialColorFromUrl = searchParams.get('color');
+  const initialSizeFromUrl = searchParams.get('size');
 
   // State declarations - must be before any code that uses them
   const [selectedImage, setSelectedImage] = useState(0);
@@ -54,17 +62,50 @@ export default function ProductDetail({
   // Case-insensitive lookup for color_images
   // The color_images keys might be "Black", "black", "BLACK", etc.
   let colorGroupImages: string[] | null = null;
-  if (selectedColor && color_images && typeof color_images === 'object') {
+
+  // Get the default color by finding which color group contains the main/hero image
+  // This ensures consistency with product listing cards which use main_image
+  let defaultColor: string | null = null;
+  if (color_images && typeof color_images === 'object') {
+    const colorImagesObj = color_images as Record<string, string[]>;
+    // Use main_image (hero image) to determine default color
+    const heroImage = main_image || (images && Array.isArray(images) && images.length > 0 ? images[0] : null);
+
+    if (heroImage) {
+      // Find which color group contains the hero/main image
+      for (const [colorKey, urls] of Object.entries(colorImagesObj)) {
+        if (colorKey !== 'default' && Array.isArray(urls) && urls.includes(heroImage)) {
+          defaultColor = colorKey;
+          break;
+        }
+      }
+    }
+
+    // Fallback: if first image not found in any color group, use the first available color
+    if (!defaultColor) {
+      const colorKeys = Object.keys(colorImagesObj).filter(
+        key => key !== 'default' && Array.isArray(colorImagesObj[key]) && colorImagesObj[key].length > 0
+      );
+      if (colorKeys.length > 0) {
+        defaultColor = colorKeys[0];
+      }
+    }
+  }
+
+  // Use selected color if available, otherwise use default color
+  const effectiveColor = selectedColor || defaultColor;
+
+  if (effectiveColor && color_images && typeof color_images === 'object') {
     const colorImagesObj = color_images as Record<string, string[]>;
 
     // First try exact match
-    if (colorImagesObj[selectedColor] && colorImagesObj[selectedColor].length > 0) {
-      colorGroupImages = colorImagesObj[selectedColor];
+    if (colorImagesObj[effectiveColor] && colorImagesObj[effectiveColor].length > 0) {
+      colorGroupImages = colorImagesObj[effectiveColor];
     } else {
       // Try case-insensitive match
-      const lowerSelectedColor = selectedColor.toLowerCase();
+      const lowerEffectiveColor = effectiveColor.toLowerCase();
       for (const [colorKey, urls] of Object.entries(colorImagesObj)) {
-        if (colorKey.toLowerCase() === lowerSelectedColor && Array.isArray(urls) && urls.length > 0) {
+        if (colorKey.toLowerCase() === lowerEffectiveColor && Array.isArray(urls) && urls.length > 0) {
           colorGroupImages = urls;
           break;
         }
@@ -81,7 +122,7 @@ export default function ProductDetail({
 
   // Debug logging
   if (process.env.NODE_ENV === 'development') {
-    console.log('[ProductDetail] Color:', selectedColor, 'Has color images:', hasColorImages, 'Count:', colorGroupImages?.length || 0);
+    console.log('[ProductDetail] Color:', effectiveColor, '(selected:', selectedColor, 'default:', defaultColor, ') Has color images:', hasColorImages, 'Count:', colorGroupImages?.length || 0);
   }
 
   const displayImages = hasColorImages
@@ -91,7 +132,7 @@ export default function ProductDetail({
   // Reset selected image index when images change
   useEffect(() => {
     setSelectedImage(0);
-  }, [hasColorImages, selectedColor]);
+  }, [hasColorImages, effectiveColor]);
 
   // Calculate base price (use sale price if available)
   const basePrice = sale_price ? Number(sale_price) : Number(price);
@@ -127,7 +168,7 @@ export default function ProductDetail({
       return;
     }
 
-    onAddToCart(selectedVariant.id, finalPrice);
+    onAddToCart(selectedVariant.id, finalPrice, selectedVariant.size || undefined, selectedVariant.colour || undefined);
   };
 
   /**
@@ -227,6 +268,8 @@ export default function ProductDetail({
             productId={product.id}
             onVariantChange={handleVariantChange}
             showStock={true}
+            initialSize={initialSizeFromUrl}
+            initialColour={initialColorFromUrl}
           />
 
           {/* Add to Cart Button */}
@@ -240,6 +283,16 @@ export default function ProductDetail({
             <ShoppingBag className="w-5 h-5 mr-2" />
             {availability.available ? "Add to Bag" : availability.message}
           </Button>
+
+          <div className="flex justify-center mt-4">
+            <WishlistButton
+              productId={product.id}
+              variantId={selectedVariant?.id}
+              showLabel={true}
+              className="w-full"
+              size="default"
+            />
+          </div>
 
           {/* Shipping Info */}
           <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">

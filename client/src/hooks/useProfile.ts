@@ -1,19 +1,34 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
-export type Me = { 
-  id: string; 
-  username: string; 
+export type Me = {
+  id: string;
+  username: string;
   phone?: string | null;
   full_name?: string | null;
   email?: string | null;
+  email_verified?: boolean;
+  phone_verified?: boolean;
   role?: string;
+  avatar_url?: string | null;
 };
-export type Address = { id: string; label?: string; name?: string; line1: string; line2?: string; city: string; region?: string; postalCode: string; country: string; phone?: string };
+export type Address = {
+  id: string;
+  label?: string;
+  name?: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  region?: string;
+  postalCode: string;
+  country: string;
+  phone?: string;
+  is_default?: boolean;
+};
 
 export function useMe() {
-  return useQuery({ 
-    queryKey: ["me"], 
+  return useQuery({
+    queryKey: ["me"],
     queryFn: async () => {
       return api.get<Me>("/api/auth/me");
     }
@@ -40,8 +55,8 @@ export function useUpdateMe() {
 
 export function useAddresses() {
   const qc = useQueryClient();
-  const list = useQuery({ 
-    queryKey: ["addresses"], 
+  const list = useQuery({
+    queryKey: ["addresses"],
     queryFn: async () => {
       return api.get<Address[]>("/api/me/addresses");
     }

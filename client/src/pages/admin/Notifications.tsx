@@ -146,8 +146,8 @@ export default function AdminNotifications() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Notifications</h1>
-                        <p className="mt-1 text-sm text-slate-400">
+                        <h1 className="admin-page-title">Notifications</h1>
+                        <p className="admin-page-subtitle">
                             Stay updated with important alerts and system messages.
                         </p>
                     </div>
@@ -156,7 +156,7 @@ export default function AdminNotifications() {
                             variant="outline"
                             onClick={() => markAllReadMutation.mutate()}
                             disabled={markAllReadMutation.isPending || (notificationsData?.length === 0)}
-                            className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+                            className="border-border text-muted-foreground hover:bg-muted hover:text-foreground font-bold shadow-sm"
                         >
                             <CheckCheck className="mr-2 h-4 w-4" />
                             Mark all as read
@@ -166,23 +166,23 @@ export default function AdminNotifications() {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="border-slate-800 bg-slate-900/50">
+                    <TabsList className="bg-muted border border-border p-1">
                         <TabsTrigger
                             value="list"
-                            className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+                            className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm font-bold"
                         >
                             All Notifications
                         </TabsTrigger>
                         <TabsTrigger
                             value="preferences"
-                            className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+                            className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm font-bold"
                         >
                             <Settings className="mr-2 h-4 w-4" />
                             Preferences
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="list" className="rounded-xl border border-slate-800/50 bg-slate-900/50">
+                    <TabsContent value="list" className="admin-card !p-0 overflow-hidden">
                         <NotificationList
                             notifications={notificationsData || []}
                             loading={isLoading}
@@ -192,7 +192,7 @@ export default function AdminNotifications() {
                         />
                     </TabsContent>
 
-                    <TabsContent value="preferences" className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+                    <TabsContent value="preferences" className="admin-card">
                         <NotificationPreferences
                             settings={settings}
                             onUpdate={updatePreferencesMutation.mutateAsync}

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
+import { useToast } from "@/hooks/use-toast";
 
 interface MobileMenuProps {
   onCartOpen?: () => void;
@@ -21,11 +22,15 @@ export default function MobileMenu({ onCartOpen, onAuthClick }: MobileMenuProps)
   const { user, logout } = useAuth();
   const cartQuery = useCart();
   const cartItemsCount = cartQuery.data?.items?.length || 0;
+  const { toast } = useToast();
 
   const menuItems = [
     { label: "Home", href: "/", icon: Home },
-    { label: "Shop", href: "/clothing", icon: ShoppingBag },
-    { label: "New Arrivals", href: "/new", icon: ShoppingBag },
+    { label: "Clothing", href: "/clothing", icon: ShoppingBag },
+    { label: "Accessories", href: "/accessories", icon: ShoppingBag },
+    { label: "Signature Collection", href: "/signature-collection", icon: ShoppingBag },
+    { label: "Our Fabrics", href: "/fabrics", icon: ShoppingBag },
+    { label: "New Arrivals", href: "/new-arrivals", icon: ShoppingBag },
     { label: "Sale", href: "/sale", icon: ShoppingBag },
   ];
 
@@ -44,6 +49,10 @@ export default function MobileMenu({ onCartOpen, onAuthClick }: MobileMenuProps)
 
   const handleLogout = async () => {
     await logout();
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
     setIsOpen(false);
   };
 
@@ -68,10 +77,10 @@ export default function MobileMenu({ onCartOpen, onAuthClick }: MobileMenuProps)
           {/* Main Navigation */}
           {menuItems.map((item) => (
             <Link key={item.href} href={item.href} onClick={handleLinkClick}>
-              <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors cursor-pointer">
                 <item.icon className="h-5 w-5" />
                 <span className="font-medium">{item.label}</span>
-              </a>
+              </div>
             </Link>
           ))}
 
@@ -81,24 +90,24 @@ export default function MobileMenu({ onCartOpen, onAuthClick }: MobileMenuProps)
           {user ? (
             <>
               <Link href="/profile" onClick={handleLinkClick}>
-                <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors cursor-pointer">
                   <User className="h-5 w-5" />
                   <span className="font-medium">My Account</span>
-                </a>
+                </div>
               </Link>
 
               <Link href="/orders" onClick={handleLinkClick}>
-                <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors cursor-pointer">
                   <ShoppingBag className="h-5 w-5" />
                   <span className="font-medium">My Orders</span>
-                </a>
+                </div>
               </Link>
 
               <Link href="/wishlist" onClick={handleLinkClick}>
-                <a className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors cursor-pointer">
                   <Heart className="h-5 w-5" />
                   <span className="font-medium">Wishlist</span>
-                </a>
+                </div>
               </Link>
 
               <button

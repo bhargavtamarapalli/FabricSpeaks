@@ -104,7 +104,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                         {breadcrumbs.map((crumb, index) => (
                             <div key={crumb.href} className="flex items-center gap-2">
                                 {index > 0 && (
-                                    <ChevronRight className="h-4 w-4 text-slate-600" />
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                 )}
                                 {index === breadcrumbs.length - 1 ? (
                                     <span className="font-medium text-foreground">{crumb.label}</span>
@@ -150,15 +150,15 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             align="end"
-                            className="w-80 border-slate-700 bg-slate-800 text-white"
+                            className="w-80"
                         >
                             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-slate-700" />
+                            <DropdownMenuSeparator />
                             <div className="max-h-96 overflow-y-auto">
                                 {isLoadingNotifications ? (
-                                    <div className="p-4 text-center text-sm text-slate-400">Loading...</div>
+                                    <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
                                 ) : notifications?.length === 0 ? (
-                                    <div className="p-4 text-center text-sm text-slate-400">No new notifications</div>
+                                    <div className="p-4 text-center text-sm text-muted-foreground">No new notifications</div>
                                 ) : (
                                     notifications?.map((notification: any) => (
                                         <NotificationItem
@@ -171,9 +171,9 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                                     ))
                                 )}
                             </div>
-                            <DropdownMenuSeparator className="bg-slate-700" />
+                            <DropdownMenuSeparator />
                             <DropdownMenuItem
-                                className="cursor-pointer justify-center text-indigo-400 hover:text-indigo-300"
+                                className="cursor-pointer justify-center text-primary font-medium hover:text-primary/80"
                                 onClick={() => navigate('/admin/notifications')}
                             >
                                 View all notifications
@@ -181,29 +181,28 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {/* User menu */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center gap-2 rounded-lg border border-slate-700/50 bg-slate-800/50 px-3 py-2 text-sm transition-colors hover:bg-slate-700/50">
+                            <button className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm transition-all hover:bg-muted">
                                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-xs font-semibold text-white">
                                     {user?.username?.charAt(0).toUpperCase() || 'A'}
                                 </div>
-                                <span className="hidden font-medium text-white md:block">
+                                <span className="hidden font-medium text-foreground md:block">
                                     {user?.username || 'Admin'}
                                 </span>
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             align="end"
-                            className="w-56 border-slate-700 bg-slate-800 text-white"
+                            className="w-56"
                         >
                             <DropdownMenuLabel>
                                 <div>
-                                    <p className="font-medium">{user?.username || 'Admin'}</p>
-                                    <p className="text-xs text-slate-400">{user?.email}</p>
+                                    <p className="font-medium text-foreground">{user?.username || 'Admin'}</p>
+                                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                                 </div>
                             </DropdownMenuLabel>
-                            <DropdownMenuSeparator className="bg-slate-700" />
+                            <DropdownMenuSeparator className="bg-border" />
                             <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={() => navigate('/admin/profile')}
@@ -218,9 +217,9 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                                 <Settings className="mr-2 h-4 w-4" />
                                 Settings
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator className="bg-slate-700" />
+                            <DropdownMenuSeparator className="bg-border" />
                             <DropdownMenuItem
-                                className="cursor-pointer text-red-400 hover:text-red-300"
+                                className="cursor-pointer text-red-500 focus:text-red-500 hover:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/20"
                                 onClick={handleLogout}
                             >
                                 <LogOut className="mr-2 h-4 w-4" />
@@ -250,17 +249,17 @@ function NotificationItem({
     return (
         <div
             className={cn(
-                'flex gap-3 border-b border-slate-700/50 px-4 py-3 transition-colors hover:bg-slate-700/30',
-                unread && 'bg-indigo-500/5'
+                'flex gap-3 border-b border-border/50 px-4 py-3 transition-colors hover:bg-muted/30',
+                unread && 'bg-primary/5'
             )}
         >
             {unread && (
-                <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-indigo-500" />
+                <div className="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-primary" />
             )}
             <div className="flex-1 space-y-1">
-                <p className="text-sm font-medium text-white">{title}</p>
-                <p className="text-xs text-slate-400">{description}</p>
-                <p className="text-xs text-slate-500">{time}</p>
+                <p className="text-sm font-medium text-foreground">{title}</p>
+                <p className="text-xs text-muted-foreground">{description}</p>
+                <p className="text-xs text-muted-foreground">{time}</p>
             </div>
         </div>
     );

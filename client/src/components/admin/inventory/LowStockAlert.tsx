@@ -52,19 +52,19 @@ export function LowStockAlert({
     }
 
     return (
-        <div className={cn('rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6', className)}>
+        <div className={cn('admin-card !bg-yellow-50/50 dark:!bg-yellow-900/10 border-yellow-200 dark:border-yellow-800/50', className)}>
             <div className="flex items-center gap-2 mb-4">
-                <AlertTriangle className="h-5 w-5 text-yellow-400" />
-                <h3 className="text-lg font-semibold text-white">Low Stock Alerts</h3>
+                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                <h3 className="text-lg font-bold text-foreground">Low Stock Alerts</h3>
             </div>
 
             <div className="space-y-3">
                 {lowStockItems.map((item, index) => (
                     <div
                         key={index}
-                        className="flex items-center gap-3 rounded-lg border border-slate-800/50 bg-slate-900/50 p-3"
+                        className="flex items-center gap-3 rounded-lg border border-border bg-background p-3 shadow-sm"
                     >
-                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-slate-700 bg-slate-800">
+                        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
                             {item.imageUrl ? (
                                 <img
                                     src={item.imageUrl}
@@ -73,26 +73,26 @@ export function LowStockAlert({
                                 />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center">
-                                    <PackageX className="h-4 w-4 text-slate-500" />
+                                    <PackageX className="h-4 w-4 text-muted-foreground" />
                                 </div>
                             )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                            <p className="truncate text-sm font-medium text-white">{item.name}</p>
-                            <p className="text-xs text-slate-400">
+                            <p className="truncate text-sm font-bold text-foreground">{item.name}</p>
+                            <p className="text-xs text-muted-foreground font-medium">
                                 Threshold: {item.threshold}
                             </p>
                         </div>
 
                         <div className="text-right">
                             <span className={cn(
-                                'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold',
+                                'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider',
                                 item.stock === 0
-                                    ? 'bg-red-500/10 text-red-400'
-                                    : 'bg-yellow-500/10 text-yellow-400'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-yellow-100 text-yellow-700'
                             )}>
-                                {item.stock} left
+                                {item.stock} LEFT
                             </span>
                         </div>
 
@@ -101,7 +101,7 @@ export function LowStockAlert({
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => onViewItem(item.id)}
-                                className="h-8 w-8 text-slate-400 hover:text-white"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
                             >
                                 <ArrowRight className="h-4 w-4" />
                             </Button>

@@ -99,11 +99,11 @@ export function SalesChart({
     // Loading skeleton
     if (loading) {
         return (
-            <div className={cn('rounded-xl border border-slate-800/50 bg-slate-900/50 p-6', className)}>
+            <div className={cn('admin-card', className)}>
                 <div className="space-y-4">
-                    <Skeleton className="h-6 w-40 bg-slate-800" />
+                    <Skeleton className="h-6 w-40 bg-muted" />
                     <div className="flex items-center justify-center">
-                        <Skeleton className="h-[300px] w-[300px] rounded-full bg-slate-800" />
+                        <Skeleton className="h-[300px] w-[300px] rounded-full bg-muted" />
                     </div>
                 </div>
             </div>
@@ -126,22 +126,26 @@ export function SalesChart({
     // Empty state
     if (!chartData || chartData.length === 0) {
         return (
-            <div className={cn('rounded-xl border border-slate-800/50 bg-slate-900/50 p-6', className)}>
-                <div className="flex flex-col items-center justify-center text-slate-400" style={{ height }}>
-                    <span className="text-4xl mb-4">🥧</span>
-                    <p className="text-sm font-medium">No sales data available</p>
-                    <p className="mt-1 text-xs text-slate-500">Data will appear here once available</p>
+            <div className={cn('admin-card', className)}>
+                <div className="admin-empty-state-container" style={{ height }}>
+                    <div className="admin-empty-state-icon">
+                        <div className="admin-empty-state-icon-inner">
+                            <span className="text-lg">✕</span>
+                        </div>
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">No sales data available</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Data will appear here once available</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className={cn('rounded-xl border border-slate-800/50 bg-slate-900/50 p-6', className)}>
+        <div className={cn('admin-card', className)}>
             {/* Header */}
             <div className="mb-6">
-                <h3 className="text-lg font-semibold text-white">Sales by Category</h3>
-                <p className="mt-1 text-sm text-slate-400">
+                <h3 className="text-lg font-bold text-foreground">Sales by Category</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
                     Total Sales: {formatCurrency(total)}
                 </p>
             </div>
@@ -195,8 +199,8 @@ export function SalesChart({
                             style={{ backgroundColor: item.color }}
                         />
                         <div className="flex-1 min-w-0">
-                            <p className="text-xs text-slate-400 truncate">{item.category}</p>
-                            <p className="text-sm font-semibold text-white">
+                            <p className="text-xs font-medium text-muted-foreground truncate">{item.category}</p>
+                            <p className="text-sm font-bold text-foreground">
                                 {formatCurrency(item.value)}
                             </p>
                         </div>
@@ -258,24 +262,24 @@ function CustomTooltip({ active, payload }: any) {
     const data = payload[0].payload;
 
     return (
-        <div className="rounded-lg border border-slate-700 bg-slate-800/95 p-3 shadow-xl backdrop-blur-sm">
+        <div className="rounded-lg border border-border bg-popover/95 p-3 shadow-xl backdrop-blur-md">
             <div className="flex items-center gap-2 mb-2">
                 <div
                     className="h-3 w-3 rounded-full"
                     style={{ backgroundColor: data.color }}
                 />
-                <p className="text-sm font-medium text-white">{data.category}</p>
+                <p className="text-sm font-bold text-foreground">{data.category}</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
                 <div className="flex items-center justify-between gap-4">
-                    <span className="text-xs text-slate-400">Sales:</span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-xs font-medium text-muted-foreground">Sales:</span>
+                    <span className="text-sm font-bold text-foreground">
                         {formatCurrency(data.value)}
                     </span>
                 </div>
                 <div className="flex items-center justify-between gap-4">
-                    <span className="text-xs text-slate-400">Share:</span>
-                    <span className="text-sm font-semibold text-white">
+                    <span className="text-xs font-medium text-muted-foreground">Share:</span>
+                    <span className="text-sm font-bold text-foreground">
                         {formatPercentage(data.percentage)}
                     </span>
                 </div>

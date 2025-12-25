@@ -9,8 +9,10 @@ export const users = pgTable("profiles", {
   user_id: uuid("user_id").notNull().unique(),
   username: text("username").notNull().unique(),
   email: text("email").unique(),
+  email_verified: boolean("email_verified").default(false),
   full_name: text("full_name"),
   phone: text("phone"),
+  phone_verified: boolean("phone_verified").default(false),
   avatar_url: text("avatar_url"),
   role: text("role").notNull().default("user"), // 'admin' or 'user'
   created_at: timestamp("created_at").defaultNow(),
@@ -252,6 +254,7 @@ export const cartItems = pgTable("cart_items", {
   variant_id: uuid("variant_id").references(() => productVariants.id),
   quantity: integer("quantity").notNull().default(1),
   size: text("size"),
+  colour: text("colour"),
   unit_price: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
 }, (table) => ({
   cartIdIdx: index("idx_cart_items_cart_id").on(table.cart_id),
@@ -263,6 +266,7 @@ export const insertCartItemSchema = createInsertSchema(cartItems).pick({
   variant_id: true,
   quantity: true,
   size: true,
+  colour: true,
   unit_price: true,
 });
 
@@ -320,7 +324,8 @@ export const orders = pgTable("orders", {
   guest_phone: text("guest_phone"),
   status: text("status").notNull().default("pending"), // 'pending', 'processing', 'shipped', 'delivered', 'cancelled'
   total_amount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  shipping_address_id: uuid("shipping_address_id").references(() => addresses.id), // Nullable if using embedded address for guests (future) or if we create an address record for them
+  shipping_address_id: uuid("shipping_address_id").references(() => addresses.id),
+  shipping_address_snapshot: jsonb("shipping_address_snapshot"), // Stores full address object for history/guests
   billing_address_id: uuid("billing_address_id").references(() => addresses.id),
   payment_method: text("payment_method"),
   payment_status: text("payment_status").default("pending"), // 'pending', 'paid', 'failed', 'refunded'
@@ -331,6 +336,8 @@ export const orders = pgTable("orders", {
   estimated_delivery: timestamp("estimated_delivery"),
   coupon_id: uuid("coupon_id"),
   discount_amount: decimal("discount_amount", { precision: 10, scale: 2 }).default("0"),
+  delivery_option: text("delivery_option").default("standard"), // 'standard', 'express'
+  gift_message: text("gift_message"),
   notes: text("notes"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
@@ -877,6 +884,24 @@ export const passwordResets = pgTable("password_resets", {
 
 export const insertPasswordResetSchema = createInsertSchema(passwordResets).pick({
   phone: true,
+  otp: true,
+  expires_at: true,
+});
+
+// Generic Verifications (Email/Phone)
+export const verifications = pgTable("verifications", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  type: text("type").notNull(), // 'email' or 'phone'
+  identifier: text("identifier").notNull(), // email or phone number
+  otp: text("otp").notNull(),
+  expires_at: timestamp("expires_at").notNull(),
+  verified: boolean("verified").default(false),
+  created_at: timestamp("created_at").defaultNow(),
+});
+
+export const insertVerificationSchema = createInsertSchema(verifications).pick({
+  type: true,
+  identifier: true,
   otp: true,
   expires_at: true,
 });

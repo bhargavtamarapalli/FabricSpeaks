@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { WishlistButtonCompact } from "@/components/WishlistButton";
 
 interface ProductCardProps {
   id: string;
@@ -38,7 +39,9 @@ export default function ProductCard({
           data-testid={`card-product-${id}`}
           className="cursor-pointer overflow-hidden hover-elevate active-elevate-2 transition-all duration-200 border-none shadow-none bg-transparent"
         >
+
           <div className="relative aspect-[3/4] overflow-hidden bg-neutral-100 mb-4">
+            <WishlistButtonCompact productId={id} />
             <img
               src={imgError ? fallbackImage : (imageUrl || fallbackImage)}
               alt={`${brand || ''} ${name}`}

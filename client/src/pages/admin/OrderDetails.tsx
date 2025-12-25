@@ -86,7 +86,7 @@ export default function AdminOrderDetailsPage() {
         return (
             <AdminLayout>
                 <div className="flex h-[50vh] items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
             </AdminLayout>
         );
@@ -97,8 +97,8 @@ export default function AdminOrderDetailsPage() {
         return (
             <AdminLayout>
                 <div className="flex h-[50vh] flex-col items-center justify-center gap-4">
-                    <p className="text-red-400">Failed to load order details</p>
-                    <Button onClick={() => navigate('/admin/orders')}>
+                    <p className="text-destructive font-medium">Failed to load order details</p>
+                    <Button variant="outline" onClick={() => navigate('/admin/orders')}>
                         Go Back to Orders
                     </Button>
                 </div>
@@ -119,7 +119,7 @@ export default function AdminOrderDetailsPage() {
                 <Button
                     variant="ghost"
                     onClick={() => navigate('/admin/orders')}
-                    className="pl-0 text-slate-400 hover:text-white"
+                    className="pl-0 text-muted-foreground hover:text-foreground"
                 >
                     <ChevronLeft className="mr-2 h-4 w-4" />
                     Back to Orders

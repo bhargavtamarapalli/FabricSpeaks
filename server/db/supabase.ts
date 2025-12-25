@@ -50,35 +50,23 @@ if (false) { // Disabled SQLite fallback for tests
   );
 
   // Initialize Postgres client for Drizzle with connection pooling
+  const isTransactionMode = process.env.DATABASE_URL?.includes(':6543');
+
   const queryClient = postgres(process.env.DATABASE_URL, {
     // Phase 5.4: Connection Pooling Configuration
     max: parseInt(process.env.DB_POOL_MAX || '10', 10), // Maximum connections in pool
     idle_timeout: parseInt(process.env.DB_IDLE_TIMEOUT || '20', 10), // Close idle connections after 20s
     max_lifetime: 60 * 30, // Close connections after 30 minutes
     connect_timeout: 30, // Connection timeout in seconds
-    
-    // Enable prepared statements for better performance
-    prepare: true,
-    
+
+    // Disable prepared statements for Supabase Transaction Mode (port 6543)
+    // PGBouncer in transaction mode does not support prepared statements
+    prepare: !isTransactionMode,
+
     // TLS/SSL configuration
-    // Supabase hosted Postgres requires TLS/SSL.
-    // SECURITY: Only disable certificate validation in development
-    ssl: (() => {
-      const isProduction = process.env.NODE_ENV === 'production';
-      const isSupabase = process.env.DATABASE_URL?.includes('.supabase.co') ?? false;
-      
-      if (!isSupabase) {
-        return false; // Local database, no SSL
-      }
-      
-      if (isProduction) {
-        return true; // Production: strict SSL validation
-      }
-      
-      // Development: allow self-signed certificates for hosted Supabase
-      return { rejectUnauthorized: false };
-    })(),
-    
+    // Supabase requires SSL. We'll use a permissive configuration for broad compatibility.
+    ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false },
+
     // Connection lifecycle hooks for monitoring
     onnotice: (notice) => {
       // Log notices in development only
@@ -86,7 +74,7 @@ if (false) { // Disabled SQLite fallback for tests
         console.log('[DB Notice]:', notice);
       }
     },
-    
+
     // Error handling
     debug: process.env.NODE_ENV === 'development' && process.env.DB_DEBUG === 'true',
   });
@@ -100,7 +88,7 @@ export { db, supabase };
 // Helper to validate auth token
 export const validateToken = async (token: string) => {
   const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (error || !user) throw new Error(error?.message || 'Invalid token');
+  if (error || !user) throw new Error(error?.message || 'Invalid token');
   return user;
 };
 

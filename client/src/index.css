@@ -49,85 +49,58 @@
   --elevate-2: rgba(0, 0, 0, .08);
 
   /* Refined Light Mode Palette */
-  --background: 210 20% 98%; /* Slightly cool gray/blue Tint for main background */
-  --foreground: 222 47% 11%; /* Deep Navy for text */
+  --background: 210 20% 98.5%;
+  /* Clean, slightly cool background */
+  --foreground: 222 47% 11%;
+  /* Deep navy charcoal for readability */
 
-  --card: 0 0% 100%; /* Pure white for cards */
+  --card: 0 0% 100%;
+  /* Pure white cards */
   --card-foreground: 222 47% 11%;
-  
+  --card-border: 214 32% 91%;
+
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
+  --popover-border: 214 32% 91%;
 
-  --primary: 221 83% 53%; /* Vivid Blue */
+  --primary: 222 47% 11%;
+  /* Primary is dark in light mode */
   --primary-foreground: 210 40% 98%;
 
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222 47% 11.2%;
 
   --muted: 210 40% 96.1%;
-  --muted-foreground: 215 16% 47%;
+  --muted-foreground: 215 16% 40%;
+  /* Slightly darker for better contrast */
 
-  --accent: 210 40% 96.1%;
+  --accent: 210 40% 95%;
   --accent-foreground: 222 47% 11.2%;
 
-  --destructive: 0 84.2% 60.2%;
+  --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 214 32% 91%; /* Subtle border */
-  --input: 214 32% 91%;
-  --ring: 221 83% 53%;
+  --border: 214 32% 90%;
+  /* Slightly more visible border */
+  --input: 214 32% 90%;
+  --ring: 222 47% 11%;
 
-  --radius: 0.75rem; /* Slightly more rounded */
+  --radius: 0.75rem;
 
   --sidebar: 0 0% 100%;
   --sidebar-foreground: 222 47% 11%;
   --sidebar-border: 214 32% 91%;
-  
-  --card-border: 214 32% 91%;
+  --sidebar-primary: 222 47% 11%;
+  --sidebar-primary-foreground: 210 40% 98%;
+  --sidebar-accent: 210 40% 96.1%;
+  --sidebar-accent-foreground: 222 47% 11.2%;
+  --sidebar-ring: 222 47% 11%;
 
-  --sidebar-primary: 0 0% 0%;
-
-  --sidebar-primary-foreground: 0 0% 98%;
-
-  --sidebar-accent: 38 35% 85%;
-
-  --sidebar-accent-foreground: 0 0% 20%;
-
-  --sidebar-ring: 38 35% 61%;
-
-  --popover: 0 0% 95%;
-
-  --popover-foreground: 0 0% 20%;
-
-  --popover-border: 0 0% 91%;
-
-  --primary: 0 0% 0%;
-
-  --primary-foreground: 0 0% 98%;
-
-  --secondary: 0 0% 92%;
-
-  --secondary-foreground: 0 0% 20%;
-
-  --muted: 0 0% 93%;
-
-  --muted-foreground: 0 0% 40%;
-
-  --accent: 38 35% 88%;
-
-  --accent-foreground: 0 0% 20%;
-
-  --destructive: 0 72% 28%;
-
-  --destructive-foreground: 0 0% 98%;
-
-  --input: 0 0% 82%;
-  --ring: 38 35% 61%;
-  --chart-1: 0 0% 0%;
-  --chart-2: 38 35% 61%;
-  --chart-3: 0 0% 40%;
-  --chart-4: 38 20% 70%;
-  --chart-5: 0 0% 60%;
+  --chart-1: 221 83% 53%;
+  --chart-2: 262 83% 58%;
+  --chart-3: 142 71% 45%;
+  --chart-4: 47 95% 55%;
+  --chart-5: 0 84% 60%;
 
   --font-sans: Inter, Helvetica Neue, system-ui, sans-serif;
   --font-serif: Georgia, serif;
@@ -436,6 +409,39 @@
 
   .parallax-layer {
     transform-style: preserve-3d;
+  }
+
+  /* Admin UI Shared Components */
+  .admin-card {
+    @apply rounded-xl border border-border bg-card p-6 shadow-sm transition-all;
+  }
+
+  .admin-page-title {
+    @apply text-3xl font-bold text-foreground tracking-tight;
+  }
+
+  .admin-page-subtitle {
+    @apply mt-1 text-sm text-muted-foreground;
+  }
+
+  .admin-sidebar-item-active {
+    @apply bg-muted/50 backdrop-blur-sm text-foreground font-bold shadow-sm;
+  }
+
+  .admin-sidebar-indicator {
+    @apply absolute left-0 top-1/2 h-8 w-1.5 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-indigo-500 to-pink-500;
+  }
+
+  .admin-empty-state-container {
+    @apply flex flex-col items-center justify-center text-center p-12 py-16;
+  }
+
+  .admin-empty-state-icon {
+    @apply mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-500/10;
+  }
+
+  .admin-empty-state-icon-inner {
+    @apply flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-orange-400 to-rose-400 opacity-80 shadow-sm text-white;
   }
 }
 

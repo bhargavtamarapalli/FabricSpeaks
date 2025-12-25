@@ -109,10 +109,10 @@ export function TeamSettings({
 
     const getRoleBadgeColor = (role: string) => {
         switch (role) {
-            case 'admin': return 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20';
-            case 'editor': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-            case 'viewer': return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-            default: return 'bg-slate-500/10 text-slate-400';
+            case 'admin': return 'bg-primary/10 text-primary border-primary/20';
+            case 'editor': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+            case 'viewer': return 'bg-muted text-muted-foreground border-border';
+            default: return 'bg-muted text-muted-foreground';
         }
     };
 
@@ -120,21 +120,21 @@ export function TeamSettings({
         <div className={cn('space-y-6', className)}>
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-medium text-white">Team Members</h3>
-                    <p className="text-sm text-slate-400">Manage access to your store.</p>
+                    <h3 className="text-lg font-medium text-foreground">Team Members</h3>
+                    <p className="text-sm text-muted-foreground">Manage access to your store.</p>
                 </div>
 
                 <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                     <DialogTrigger asChild>
-                        <Button className="bg-indigo-600 hover:bg-indigo-700">
+                        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                             <UserPlus className="mr-2 h-4 w-4" />
                             Invite Member
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="border-slate-800 bg-slate-900 text-white sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
                             <DialogTitle>Invite Team Member</DialogTitle>
-                            <DialogDescription className="text-slate-400">
+                            <DialogDescription>
                                 Send an invitation to join your team.
                             </DialogDescription>
                         </DialogHeader>
@@ -144,19 +144,18 @@ export function TeamSettings({
                                 <Input
                                     {...register('email')}
                                     placeholder="colleague@example.com"
-                                    className="border-slate-700 bg-slate-800 text-white"
                                 />
                                 {errors.email && (
-                                    <p className="text-xs text-red-400">{errors.email.message}</p>
+                                    <p className="text-xs text-destructive">{errors.email.message}</p>
                                 )}
                             </div>
                             <div className="space-y-2">
                                 <Label>Role</Label>
                                 <Select onValueChange={(val: any) => setValue('role', val)} defaultValue="editor">
-                                    <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                                    <SelectTrigger>
                                         <SelectValue placeholder="Select role" />
                                     </SelectTrigger>
-                                    <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                                    <SelectContent>
                                         <SelectItem value="admin">Admin (Full Access)</SelectItem>
                                         <SelectItem value="editor">Editor (Manage Content)</SelectItem>
                                         <SelectItem value="viewer">Viewer (Read Only)</SelectItem>
@@ -168,14 +167,14 @@ export function TeamSettings({
                                     type="button"
                                     variant="ghost"
                                     onClick={() => setIsInviteOpen(false)}
-                                    className="text-slate-400 hover:text-white"
+                                    className="text-muted-foreground hover:text-foreground"
                                 >
                                     Cancel
                                 </Button>
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="bg-indigo-600 hover:bg-indigo-700"
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
                                 >
                                     {loading ? 'Sending...' : 'Send Invitation'}
                                 </Button>
@@ -185,30 +184,30 @@ export function TeamSettings({
                 </Dialog>
             </div>
 
-            <div className="rounded-lg border border-slate-800 bg-slate-900/50">
+            <div className="rounded-lg border border-border bg-card">
                 {members.map((member, index) => (
                     <div
                         key={member.id}
                         className={cn(
                             "flex items-center justify-between p-4",
-                            index !== members.length - 1 && "border-b border-slate-800"
+                            index !== members.length - 1 && "border-b border-border"
                         )}
                     >
                         <div className="flex items-center gap-4">
-                            <Avatar className="h-10 w-10 border border-slate-700">
+                            <Avatar className="h-10 w-10 border border-border">
                                 <AvatarImage src={member.avatar} />
-                                <AvatarFallback className="bg-slate-800 text-slate-400">
-                                    {member.name.charAt(0).toUpperCase()}
+                                <AvatarFallback className="bg-muted text-muted-foreground uppercase">
+                                    {(member.name || member.email || '?').charAt(0)}
                                 </AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="font-medium text-white">
+                                <p className="font-medium text-foreground">
                                     {member.name}
                                     {member.status === 'pending' && (
-                                        <span className="ml-2 text-xs text-yellow-500">(Pending)</span>
+                                        <span className="ml-2 text-xs text-yellow-600 dark:text-yellow-500">(Pending)</span>
                                     )}
                                 </p>
-                                <p className="text-sm text-slate-400">{member.email}</p>
+                                <p className="text-sm text-muted-foreground">{member.email}</p>
                             </div>
                         </div>
 
@@ -222,12 +221,12 @@ export function TeamSettings({
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-white">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                                         <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="border-slate-700 bg-slate-800 text-white">
-                                    <DropdownMenuItem className="text-red-400 hover:bg-red-400/10 hover:text-red-300 cursor-pointer" onClick={() => onRemove(member.id)}>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem className="text-destructive hover:bg-destructive/10 cursor-pointer" onClick={() => onRemove(member.id)}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Remove Member
                                     </DropdownMenuItem>

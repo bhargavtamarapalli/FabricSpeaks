@@ -84,18 +84,15 @@ export function MetricCard({
         : null;
 
     const trendColor = trendDirection === 'up'
-        ? 'text-green-400'
+        ? 'bg-green-500/10 text-green-600 dark:text-green-400'
         : trendDirection === 'down'
-            ? 'text-red-400'
-            : 'text-slate-400';
+            ? 'bg-red-500/10 text-red-600 dark:text-red-400'
+            : 'bg-muted text-muted-foreground';
 
     // Loading skeleton
     if (loading) {
         return (
-            <div className={cn(
-                'rounded-xl border border-border bg-card p-6 shadow-sm',
-                className
-            )}>
+            <div className={cn('admin-card', className)}>
                 <div className="flex items-start justify-between">
                     <div className="space-y-3 flex-1">
                         <Skeleton className="h-4 w-24 bg-muted" />
@@ -112,16 +109,16 @@ export function MetricCard({
     if (error) {
         return (
             <div className={cn(
-                'rounded-xl border border-red-900/50 bg-red-950/20 p-6 backdrop-blur-sm',
+                'admin-card !bg-destructive/5 !border-destructive/20',
                 className
             )}>
                 <div className="flex items-start gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-500/10">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-destructive/10">
                         <span className="text-2xl">⚠️</span>
                     </div>
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-red-400">{title}</p>
-                        <p className="mt-1 text-xs text-red-300/70">
+                        <p className="text-sm font-bold text-destructive">{title}</p>
+                        <p className="mt-1 text-xs text-destructive/70">
                             Failed to load data
                         </p>
                     </div>
@@ -133,7 +130,7 @@ export function MetricCard({
     return (
         <div
             className={cn(
-                'group relative overflow-hidden rounded-xl border border-border bg-card p-6 shadow-sm transition-all hover:border-primary/50 hover:shadow-lg',
+                'admin-card group relative overflow-hidden transition-all hover:border-primary/50 hover:shadow-lg',
                 onClick && 'cursor-pointer',
                 className
             )}
@@ -160,9 +157,7 @@ export function MetricCard({
                         <div className="flex items-center gap-2">
                             <div className={cn(
                                 'flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-                                trendDirection === 'up' && 'bg-green-500/10 text-green-400',
-                                trendDirection === 'down' && 'bg-red-500/10 text-red-400',
-                                !trendDirection && 'bg-slate-500/10 text-slate-400'
+                                trendColor
                             )}>
                                 {trendDirection === 'up' && <TrendingUp className="h-3 w-3" />}
                                 {trendDirection === 'down' && <TrendingDown className="h-3 w-3" />}
@@ -181,8 +176,7 @@ export function MetricCard({
                 {/* Right section - Icon */}
                 {Icon && (
                     <div className={cn(
-                        'flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-foreground transition-all group-hover:scale-110 group-hover:bg-primary/10 group-hover:text-primary',
-                        /* iconColor prop is overridden by stronger functional styling above for consistency */
+                        'flex h-12 w-12 items-center justify-center rounded-lg bg-muted/50 text-muted-foreground transition-all group-hover:scale-110 group-hover:bg-primary/5 group-hover:text-primary',
                     )}>
                         <Icon className="h-6 w-6" />
                     </div>

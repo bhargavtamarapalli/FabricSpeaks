@@ -87,57 +87,57 @@ export function GeneralSettings({
         <form onSubmit={handleSubmit(onSave)} className={cn('space-y-8', className)}>
             {/* Store Profile */}
             <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-medium text-white">
-                    <Store className="h-5 w-5 text-indigo-400" />
+                <div className="flex items-center gap-2 text-lg font-bold text-foreground">
+                    <Store className="h-5 w-5 text-primary" />
                     <h3>Store Profile</h3>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                        <Label>Store Name</Label>
+                        <Label className="font-bold">Store Name</Label>
                         <Input
                             {...register('storeName')}
-                            className="border-slate-700 bg-slate-800 text-white"
+                            className="border-border bg-background text-foreground"
                         />
                         {errors.storeName && (
                             <p className="text-xs text-red-400">{errors.storeName.message}</p>
                         )}
                     </div>
                     <div className="space-y-2">
-                        <Label>Store Email</Label>
+                        <Label className="font-bold">Store Email</Label>
                         <Input
                             {...register('storeEmail')}
-                            className="border-slate-700 bg-slate-800 text-white"
+                            className="border-border bg-background text-foreground"
                         />
                         {errors.storeEmail && (
                             <p className="text-xs text-red-400">{errors.storeEmail.message}</p>
                         )}
                     </div>
                     <div className="space-y-2">
-                        <Label>Support Phone</Label>
+                        <Label className="font-bold">Support Phone</Label>
                         <Input
                             {...register('storePhone')}
-                            className="border-slate-700 bg-slate-800 text-white"
+                            className="border-border bg-background text-foreground"
                         />
                     </div>
                 </div>
             </div>
 
-            <Separator className="bg-slate-800" />
+            <Separator className="bg-border" />
 
             {/* Localization */}
             <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-medium text-white">
-                    <Globe className="h-5 w-5 text-pink-400" />
+                <div className="flex items-center gap-2 text-lg font-bold text-foreground">
+                    <Globe className="h-5 w-5 text-primary" />
                     <h3>Localization</h3>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                        <Label>Currency</Label>
+                        <Label className="font-bold">Currency</Label>
                         <Select defaultValue={defaultValues?.currency || 'INR'}>
-                            <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                            <SelectTrigger className="border-border bg-background text-foreground">
                                 <SelectValue placeholder="Select currency" />
                             </SelectTrigger>
-                            <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                            <SelectContent className="border-border bg-background text-foreground">
                                 <SelectItem value="INR">Indian Rupee (INR)</SelectItem>
                                 <SelectItem value="USD">US Dollar (USD)</SelectItem>
                                 <SelectItem value="EUR">Euro (EUR)</SelectItem>
@@ -145,12 +145,12 @@ export function GeneralSettings({
                         </Select>
                     </div>
                     <div className="space-y-2">
-                        <Label>Timezone</Label>
+                        <Label className="font-bold">Timezone</Label>
                         <Select defaultValue={defaultValues?.timezone || 'Asia/Kolkata'}>
-                            <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                            <SelectTrigger className="border-border bg-background text-foreground">
                                 <SelectValue placeholder="Select timezone" />
                             </SelectTrigger>
-                            <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                            <SelectContent className="border-border bg-background text-foreground">
                                 <SelectItem value="Asia/Kolkata">India Standard Time (IST)</SelectItem>
                                 <SelectItem value="UTC">Coordinated Universal Time (UTC)</SelectItem>
                                 <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
@@ -160,20 +160,20 @@ export function GeneralSettings({
                 </div>
             </div>
 
-            <Separator className="bg-slate-800" />
+            <Separator className="bg-border" />
 
             {/* Address */}
             <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-medium text-white">
-                    <MapPin className="h-5 w-5 text-green-400" />
+                <div className="flex items-center gap-2 text-lg font-bold text-foreground">
+                    <MapPin className="h-5 w-5 text-primary" />
                     <h3>Business Address</h3>
                 </div>
                 <div className="grid gap-4">
                     <div className="space-y-2">
-                        <Label>Address Line 1</Label>
+                        <Label className="font-bold">Address Line 1</Label>
                         <Input
                             {...register('address.line1')}
-                            className="border-slate-700 bg-slate-800 text-white"
+                            className="border-border bg-background text-foreground"
                         />
                         {errors.address?.line1 && (
                             <p className="text-xs text-red-400">{errors.address.line1.message}</p>
@@ -181,20 +181,20 @@ export function GeneralSettings({
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label>City</Label>
+                            <Label className="font-bold">City</Label>
                             <Input
                                 {...register('address.city')}
-                                className="border-slate-700 bg-slate-800 text-white"
+                                className="border-border bg-background text-foreground"
                             />
                             {errors.address?.city && (
                                 <p className="text-xs text-red-400">{errors.address.city.message}</p>
                             )}
                         </div>
                         <div className="space-y-2">
-                            <Label>State / Province</Label>
+                            <Label className="font-bold">State / Province</Label>
                             <Input
                                 {...register('address.state')}
-                                className="border-slate-700 bg-slate-800 text-white"
+                                className="border-border bg-background text-foreground"
                             />
                             {errors.address?.state && (
                                 <p className="text-xs text-red-400">{errors.address.state.message}</p>
@@ -203,20 +203,20 @@ export function GeneralSettings({
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label>Postal Code</Label>
+                            <Label className="font-bold">Postal Code</Label>
                             <Input
                                 {...register('address.postalCode')}
-                                className="border-slate-700 bg-slate-800 text-white"
+                                className="border-border bg-background text-foreground"
                             />
                             {errors.address?.postalCode && (
                                 <p className="text-xs text-red-400">{errors.address.postalCode.message}</p>
                             )}
                         </div>
                         <div className="space-y-2">
-                            <Label>Country</Label>
+                            <Label className="font-bold">Country</Label>
                             <Input
                                 {...register('address.country')}
-                                className="border-slate-700 bg-slate-800 text-white"
+                                className="border-border bg-background text-foreground"
                             />
                             {errors.address?.country && (
                                 <p className="text-xs text-red-400">{errors.address.country.message}</p>
@@ -230,7 +230,7 @@ export function GeneralSettings({
                 <Button
                     type="submit"
                     disabled={loading}
-                    className="bg-indigo-600 hover:bg-indigo-700"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm"
                 >
                     {loading ? 'Saving...' : 'Save Changes'}
                 </Button>

@@ -20,6 +20,7 @@ import { AdminLayout } from '@/components/admin/layout/AdminLayout';
 import { ProductTable } from '@/components/admin/products/ProductTable';
 import { ProductGrid } from '@/components/admin/products/ProductGrid';
 import { ProductDetailsDialog } from '@/components/admin/products/ProductDetailsDialog';
+import { BulkSaleModal } from '@/components/admin/products/BulkSaleModal';
 import { ProductFilters } from '@/components/admin/products/ProductFilters';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +39,7 @@ export default function AdminProducts() {
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('grid'); // Default to grid view
     const [detailsOpen, setDetailsOpen] = useState(false);
+    const [bulkSaleOpen, setBulkSaleOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<AdminProduct | null>(null);
 
     // Fetch products
@@ -130,8 +132,8 @@ export default function AdminProducts() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-foreground">Products</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <h1 className="admin-page-title">Products</h1>
+                        <p className="admin-page-subtitle">
                             Manage your product catalog, inventory, and pricing.
                         </p>
                     </div>
@@ -156,15 +158,22 @@ export default function AdminProducts() {
                         </div>
                         <Button
                             variant="outline"
+                            onClick={() => setBulkSaleOpen(true)}
+                            className="mr-2 text-primary border-primary/20 hover:bg-primary/5"
+                        >
+                            Bulk Sale
+                        </Button>
+                        <Button
+                            variant="outline"
                             onClick={handleExport}
-                            className="border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+                            className="text-foreground hover:bg-muted"
                         >
                             <Download className="mr-2 h-4 w-4" />
                             Export
                         </Button>
                         <Button
                             onClick={handleCreate}
-                            className="bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                             <Plus className="mr-2 h-4 w-4" />
                             Add Product
@@ -208,6 +217,14 @@ export default function AdminProducts() {
                     open={detailsOpen}
                     onOpenChange={setDetailsOpen}
                     product={selectedProduct}
+                />
+
+                <BulkSaleModal
+                    open={bulkSaleOpen}
+                    onOpenChange={setBulkSaleOpen}
+                    categories={categories || []}
+                    selectedProductIds={selectedIds}
+                    onSuccess={() => queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })}
                 />
             </div>
         </AdminLayout>

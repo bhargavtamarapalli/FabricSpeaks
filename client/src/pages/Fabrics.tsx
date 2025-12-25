@@ -1,13 +1,7 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
+import PageLayout from "@/components/PageLayout";
 import TiltCard from "@/components/TiltCard";
-import ShoppingCart from "@/components/ShoppingCart";
-import AuthModal from "@/components/AuthModal";
-import { useCart } from "@/hooks/useCart";
-import { useAuth } from "@/hooks/useAuth";
 
 const video1 = "/assets/Generative_Video_of_Lenin_Fabric.mp4";
 const video2 = "/assets/Luxurious_Silk_Satin_Video_Generation.mp4";
@@ -16,12 +10,7 @@ import egyptCottonImg from "@assets/Egypt_Cotton.png";
 import merinoWoolImg from "@assets/Merino_Wool.png";
 
 export default function Fabrics() {
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [, setLocation] = useLocation();
-    const cartQuery = useCart();
-    const cartItems = cartQuery.data?.items || [];
-    const { login, register } = useAuth();
 
     const fabrics = [
         {
@@ -52,13 +41,7 @@ export default function Fabrics() {
     ];
 
     return (
-        <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
-            <Header
-                cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                onCartClick={() => setIsCartOpen(true)}
-                onAuthClick={() => setIsAuthOpen(true)}
-            />
-
+        <PageLayout className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
             <main className="flex-1">
                 <section className="py-24 px-6 bg-stone-50 dark:bg-neutral-900 border-b border-stone-100 dark:border-neutral-800">
                     <div className="max-w-4xl mx-auto text-center">
@@ -124,37 +107,6 @@ export default function Fabrics() {
                     </div>
                 </section>
             </main>
-
-            <Footer />
-
-            <ShoppingCart
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                onCheckout={() => setLocation('/checkout')}
-            />
-
-            <AuthModal
-                isOpen={isAuthOpen}
-                onClose={() => setIsAuthOpen(false)}
-                onLogin={async (email, password) => {
-                    try {
-                        await login(email, password);
-                        setIsAuthOpen(false);
-                    } catch (e) {
-                        console.error("Login failed:", e);
-                        alert("Login failed. Please check your credentials.");
-                    }
-                }}
-                onRegister={async (email, password, name) => {
-                    try {
-                        await register(email, password);
-                        setIsAuthOpen(false);
-                    } catch (e) {
-                        console.error("Registration failed:", e);
-                        alert("Registration failed. Please try again.");
-                    }
-                }}
-            />
-        </div>
+        </PageLayout>
     );
 }

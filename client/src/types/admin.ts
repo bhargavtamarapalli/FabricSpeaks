@@ -158,13 +158,13 @@ export interface ProductFilters {
 // Order Types
 // ============================================================================
 
-export type OrderStatus = 
-  | 'pending' 
-  | 'confirmed' 
-  | 'processing' 
-  | 'shipped' 
-  | 'delivered' 
-  | 'cancelled' 
+export type OrderStatus =
+  | 'pending'
+  | 'confirmed'
+  | 'processing'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled'
   | 'refunded';
 
 export interface AdminOrder {
@@ -239,14 +239,17 @@ export interface OrderFilters {
   limit?: number;
 }
 
-export interface OrderTimeline {
+export interface OrderTimelineEvent {
   id: string;
   orderId: string;
   status: OrderStatus;
   note?: string;
-  createdBy?: string;
-  createdAt: string;
+  performedBy?: string;
+  timestamp: string;
 }
+
+// Keep for backward compatibility if needed
+export type OrderTimeline = OrderTimelineEvent;
 
 // ============================================================================
 // Inventory Types
@@ -314,6 +317,7 @@ export interface AdminCustomer {
     lifetimeValue: number;
   };
   segment: 'vip' | 'regular' | 'at-risk' | 'inactive';
+  name?: string; // Fallback for components expect names
 }
 
 export interface CustomerFilters {
@@ -367,6 +371,16 @@ export interface CustomerSegment {
 // ============================================================================
 // Notification Types (extending existing)
 // ============================================================================
+
+export interface AdminNotification {
+  id: string;
+  type: 'order' | 'inventory' | 'customer' | 'system';
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  link?: string;
+}
 
 export interface NotificationRecipient {
   id: string;
@@ -492,6 +506,16 @@ export interface ApiError {
   message: string;
   details?: any;
 }
+
+export type Permission =
+  | 'manage_products'
+  | 'manage_orders'
+  | 'manage_customers'
+  | 'manage_inventory'
+  | 'manage_notifications'
+  | 'view_analytics'
+  | 'manage_settings'
+  | 'manage_team';
 
 export interface AdminUser {
   id: string;

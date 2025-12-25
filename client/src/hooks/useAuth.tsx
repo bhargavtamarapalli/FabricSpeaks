@@ -2,10 +2,11 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { createClient, type Session } from "@supabase/supabase-js";
 import { api, type ApiError } from "@/lib/api";
 import { z } from "zod";
+import { initializeSessionTracking, clearSessionTracking } from "@/lib/sessionConfig";
 
 import { supabase } from "@/lib/supabase";
 
-type AuthUser = { id: string; username: string; role: string } | null;
+type AuthUser = { id: string; username: string; email: string; role: string } | null;
 
 type AuthContextValue = {
   user: AuthUser;
@@ -295,6 +296,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (mergeError) {
           console.error('Failed to merge guest cart:', mergeError);
         }
+
+        // Initialize session tracking for idle timeout
+        initializeSessionTracking(me?.role || 'user');
       } catch (apiErr: any) {
         setUser(null);
         setError(apiErr);
@@ -351,6 +355,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
       localStorage.removeItem('fabricspeaks_session_id');
+
+      // Clear session tracking
+      clearSessionTracking();
     }
   };
 

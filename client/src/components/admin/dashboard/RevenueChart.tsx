@@ -73,7 +73,7 @@ export interface RevenueChartProps {
 
 export function RevenueChart({
     data,
-    type = 'area',
+    type = 'line',
     period = 'month',
     showOrders = false,
     showCustomers = false,
@@ -118,13 +118,13 @@ export function RevenueChart({
     // Loading skeleton
     if (loading) {
         return (
-            <div className={cn('rounded-xl border border-slate-800/50 bg-slate-900/50 p-6', className)}>
+            <div className={cn('admin-card', className)}>
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <Skeleton className="h-6 w-32 bg-slate-800" />
-                        <Skeleton className="h-8 w-24 bg-slate-800" />
+                        <Skeleton className="h-6 w-32 bg-muted" />
+                        <Skeleton className="h-8 w-24 bg-muted" />
                     </div>
-                    <Skeleton className="h-[350px] w-full bg-slate-800" />
+                    <Skeleton className="h-[350px] w-full bg-muted" />
                 </div>
             </div>
         );
@@ -146,32 +146,36 @@ export function RevenueChart({
     // Empty state
     if (!chartData || chartData.length === 0) {
         return (
-            <div className={cn('rounded-xl border border-slate-800/50 bg-slate-900/50 p-6', className)}>
-                <div className="flex flex-col items-center justify-center text-slate-400" style={{ height }}>
-                    <span className="text-4xl mb-4">📈</span>
-                    <p className="text-sm font-medium">No data available</p>
-                    <p className="mt-1 text-xs text-slate-500">Data will appear here once available</p>
+            <div className={cn('admin-card', className)}>
+                <div className="admin-empty-state-container" style={{ height }}>
+                    <div className="admin-empty-state-icon">
+                        <div className="admin-empty-state-icon-inner">
+                            <span className="text-lg">✕</span>
+                        </div>
+                    </div>
+                    <p className="text-sm font-semibold text-foreground">No revenue data available</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Data will appear here once available</p>
                 </div>
             </div>
         );
     }
 
-    const ChartComponent = type === 'area' ? AreaChart : LineChart;
-    const DataComponent = type === 'area' ? Area : Line;
+    const ChartComponent = (type === 'area' ? AreaChart : LineChart) as any;
+    const DataComponent = (type === 'area' ? Area : Line) as any;
 
     return (
-        <div className={cn('rounded-xl border border-slate-800/50 bg-slate-900/50 p-6', className)}>
+        <div className={cn('admin-card', className)}>
             {/* Header */}
-            <div className="mb-6 flex items-start justify-between">
+            <div className="mb-8 flex items-start justify-between">
                 <div>
-                    <h3 className="text-lg font-semibold text-white">Revenue Trend</h3>
-                    <p className="mt-1 text-sm text-slate-400">
+                    <h3 className="text-lg font-bold text-foreground">Revenue Trend</h3>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
                         Total: {formatCurrency(stats.totalRevenue)}
                     </p>
                 </div>
                 <div className="text-right">
-                    <p className="text-sm text-slate-400">Average</p>
-                    <p className="text-lg font-semibold text-white">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Average</p>
+                    <p className="text-xl font-bold text-foreground">
                         {formatCurrency(stats.avgRevenue)}
                     </p>
                 </div>
@@ -186,52 +190,58 @@ export function RevenueChart({
                     {/* Grid */}
                     <CartesianGrid
                         strokeDasharray="3 3"
-                        stroke="#334155"
-                        opacity={0.3}
+                        stroke="hsl(var(--border))"
+                        opacity={0.5}
                         vertical={false}
                     />
 
                     {/* X Axis */}
                     <XAxis
                         dataKey="formattedDate"
-                        stroke="#64748b"
-                        fontSize={12}
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={11}
+                        fontWeight={500}
                         tickLine={false}
                         axisLine={false}
+                        dy={10}
                     />
 
                     {/* Y Axis */}
                     <YAxis
-                        stroke="#64748b"
-                        fontSize={12}
+                        stroke="hsl(var(--muted-foreground))"
+                        fontSize={11}
+                        fontWeight={500}
                         tickLine={false}
                         axisLine={false}
-                        tickFormatter={(value) => formatCurrency(value, 'INR', 'en-IN').replace('.00', '')}
+                        tickFormatter={(value) => `₹${value.toLocaleString()}`}
                     />
 
                     {/* Tooltip */}
                     <Tooltip
                         content={<CustomTooltip />}
-                        cursor={{ stroke: CHART_COLORS.primary, strokeWidth: 1, strokeDasharray: '5 5' }}
+                        cursor={{ stroke: '#1e293b', strokeWidth: 1.5, strokeDasharray: '4 4' }}
                     />
 
                     {/* Legend */}
                     <Legend
-                        wrapperStyle={{ paddingTop: '20px' }}
+                        verticalAlign="bottom"
+                        align="center"
+                        wrapperStyle={{ paddingTop: '30px' }}
                         iconType="circle"
-                        formatter={(value) => <span className="text-sm text-slate-300">{value}</span>}
+                        formatter={(value) => <span className="text-xs font-medium text-muted-foreground ml-1">{value}</span>}
                     />
 
-                    {/* Revenue Line/Area */}
+                    {/* Revenue Line */}
                     <DataComponent
                         type="monotone"
                         dataKey="revenue"
                         name="Revenue"
-                        stroke={CHART_COLORS.primary}
-                        fill={`url(#revenueGradient)`}
-                        strokeWidth={2}
+                        stroke="#1e293b" // Deep Navy color from image
+                        fill="transparent"
+                        strokeWidth={2.5}
                         dot={false}
-                        activeDot={{ r: 6, fill: CHART_COLORS.primary }}
+                        activeDot={{ r: 4, fill: '#1e293b', strokeWidth: 2, stroke: '#fff' }}
+                        animationDuration={1500}
                     />
 
                     {/* Orders Line (optional) */}
@@ -292,9 +302,9 @@ function CustomTooltip({ active, payload, label }: any) {
     }
 
     return (
-        <div className="rounded-lg border border-slate-700 bg-slate-800/95 p-3 shadow-xl backdrop-blur-sm">
-            <p className="mb-2 text-sm font-medium text-white">{label}</p>
-            <div className="space-y-1">
+        <div className="rounded-lg border border-border bg-popover/95 p-3 shadow-xl backdrop-blur-md">
+            <p className="mb-2 text-sm font-bold text-foreground">{label}</p>
+            <div className="space-y-1.5">
                 {payload.map((entry: any, index: number) => (
                     <div key={index} className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2">
@@ -302,9 +312,9 @@ function CustomTooltip({ active, payload, label }: any) {
                                 className="h-2 w-2 rounded-full"
                                 style={{ backgroundColor: entry.color }}
                             />
-                            <span className="text-xs text-slate-400">{entry.name}:</span>
+                            <span className="text-xs font-medium text-muted-foreground">{entry.name}:</span>
                         </div>
-                        <span className="text-sm font-semibold text-white">
+                        <span className="text-sm font-bold text-foreground">
                             {entry.name === 'Revenue'
                                 ? formatCurrency(entry.value)
                                 : entry.value.toLocaleString()}

@@ -1,10 +1,9 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ShoppingCart from "@/components/ShoppingCart";
+import PageLayout from "@/components/PageLayout";
 import ProductCard from "@/components/ProductCard";
+import { Button } from "@/components/ui/button";
 import { useCart, useAddToCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { useProducts } from "@/hooks/useProducts";
@@ -24,7 +23,6 @@ import Newsletter from "@/components/home/Newsletter";
 import { PollWidget } from "@/components/PollWidget";
 
 export default function Home() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const cartQuery = useCart();
   const addToCart = useAddToCart();
   const { toast } = useToast();
@@ -38,17 +36,11 @@ export default function Home() {
 
   const handleAddToCart = (id: string) => {
     addToCart.mutate({ product_id: id, quantity: 1 });
-    setIsCartOpen(true); // Open cart to show feedback
+    document.dispatchEvent(new Event('open-cart')); // Open cart to show feedback
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans text-neutral-900 dark:bg-black dark:text-white transition-colors duration-300">
-      <Header
-        cartItemCount={(cartQuery.data?.items || []).reduce((sum, item) => sum + item.quantity, 0)}
-        onCartClick={() => setIsCartOpen(true)}
-        onAuthClick={() => document.dispatchEvent(new CustomEvent('open-auth'))}
-      />
-
+    <PageLayout className="min-h-screen flex flex-col font-sans text-neutral-900 dark:bg-black dark:text-white transition-colors duration-300">
       <main className="flex-1">
         <HeroSection />
         <MarqueeBridge />
@@ -86,6 +78,13 @@ export default function Home() {
 
             {productsQuery.isLoading ? (
               <div className="flex justify-center py-12"><Loading size="lg" /></div>
+            ) : productsQuery.error ? (
+              <div className="text-center py-12">
+                <p className="text-red-500 mb-4">Failed to load new arrivals.</p>
+                <Button variant="outline" onClick={() => productsQuery.refetch()}>
+                  Try Again
+                </Button>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {(productsQuery.data?.items || []).map((product, i) => (
@@ -101,7 +100,7 @@ export default function Home() {
                       brand={product.brand}
                       name={product.name}
                       price={Number(product.price)}
-                      imageUrl={(product.images && Array.isArray(product.images) && product.images.length > 0) ? product.images[0] : ""}
+                      imageUrl={((product as any).images && Array.isArray((product as any).images) && (product as any).images.length > 0) ? (product as any).images[0] : ""}
                       salePrice={product.sale_price ? Number(product.sale_price) : undefined}
                       isNew={product.created_at ? new Date(product.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) : false}
                       onAddToCart={() => handleAddToCart(product.id)}
@@ -132,13 +131,6 @@ export default function Home() {
         {/* 11. Newsletter */}
         <Newsletter />
       </main>
-
-      <Footer />
-
-      <ShoppingCart
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-      />
-    </div>
+    </PageLayout>
   );
 }

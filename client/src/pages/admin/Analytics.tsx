@@ -111,18 +111,18 @@ export default function AdminAnalytics() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Analytics</h1>
-                        <p className="mt-1 text-sm text-slate-400">
+                        <h1 className="admin-page-title">Analytics</h1>
+                        <p className="admin-page-subtitle">
                             Overview of your business performance and growth.
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Select value={timeRange} onValueChange={setTimeRange}>
-                            <SelectTrigger className="w-[140px] border-slate-700 bg-slate-800 text-white">
-                                <Calendar className="mr-2 h-4 w-4" />
+                            <SelectTrigger className="w-[140px] bg-muted/50 border-border">
+                                <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                            <SelectContent>
                                 <SelectItem value="7d">Last 7 days</SelectItem>
                                 <SelectItem value="30d">Last 30 days</SelectItem>
                                 <SelectItem value="90d">Last 3 months</SelectItem>
@@ -131,7 +131,7 @@ export default function AdminAnalytics() {
                         </Select>
                         <Button
                             onClick={handleExport}
-                            className="bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                             <Download className="mr-2 h-4 w-4" />
                             Export Report
@@ -141,65 +141,65 @@ export default function AdminAnalytics() {
 
                 {/* Key Metrics Cards */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+                    <div className="admin-card">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Total Revenue</p>
-                                <p className="mt-2 text-2xl font-bold text-white">{formatCurrency(stats?.revenue?.total || 0)}</p>
+                                <p className="text-sm font-semibold text-muted-foreground">Total Revenue</p>
+                                <p className="mt-2 text-2xl font-bold text-foreground">{formatCurrency(stats?.revenue?.total || 0)}</p>
                             </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-400">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                                 <CreditCard className="h-6 w-6" />
                             </div>
                         </div>
-                        <div className="mt-4 flex items-center text-sm text-green-400">
+                        <div className="mt-4 flex items-center text-sm text-green-600 font-medium">
                             <TrendingUp className="mr-1 h-4 w-4" />
                             <span>+{stats?.revenue?.trend || 0}% from last month</span>
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+                    <div className="admin-card">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Total Orders</p>
-                                <p className="mt-2 text-2xl font-bold text-white">{stats?.orders?.total || 0}</p>
+                                <p className="text-sm font-semibold text-muted-foreground">Total Orders</p>
+                                <p className="mt-2 text-2xl font-bold text-foreground">{stats?.orders?.total || 0}</p>
                             </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pink-500/10 text-pink-400">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-600">
                                 <ShoppingBag className="h-6 w-6" />
                             </div>
                         </div>
-                        <div className="mt-4 flex items-center text-sm text-green-400">
+                        <div className="mt-4 flex items-center text-sm text-green-600 font-medium">
                             <TrendingUp className="mr-1 h-4 w-4" />
                             <span>+{stats?.orders?.trend || 0}% from last month</span>
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+                    <div className="admin-card">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Active Products</p>
-                                <p className="mt-2 text-2xl font-bold text-white">{stats?.products?.active || 0}</p>
+                                <p className="text-sm font-semibold text-muted-foreground">Active Products</p>
+                                <p className="mt-2 text-2xl font-bold text-foreground">{stats?.products?.active || 0}</p>
                             </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-500/10 text-purple-400">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-500/10 text-green-600">
                                 <Users className="h-6 w-6" />
                             </div>
                         </div>
-                        <div className="mt-4 flex items-center text-sm text-green-400">
+                        <div className="mt-4 flex items-center text-sm text-green-600 font-medium">
                             <TrendingUp className="mr-1 h-4 w-4" />
                             <span>+15.3% from last month</span>
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+                    <div className="admin-card">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-medium text-slate-400">Low Stock Items</p>
-                                <p className="mt-2 text-2xl font-bold text-white">{stats?.products?.lowStock || 0}</p>
+                                <p className="text-sm font-semibold text-muted-foreground">Low Stock Items</p>
+                                <p className="mt-2 text-2xl font-bold text-foreground">{stats?.products?.lowStock || 0}</p>
                             </div>
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/10 text-orange-600">
                                 <TrendingUp className="h-6 w-6" />
                             </div>
                         </div>
-                        <div className="mt-4 flex items-center text-sm text-red-400">
+                        <div className="mt-4 flex items-center text-sm text-orange-600 font-medium">
                             <TrendingUp className="mr-1 h-4 w-4" />
                             <span>Needs Attention</span>
                         </div>
@@ -209,28 +209,28 @@ export default function AdminAnalytics() {
                 {/* Charts Grid */}
                 <div className="grid gap-6 lg:grid-cols-2">
                     {/* Revenue Chart */}
-                    <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
-                        <h3 className="mb-6 text-lg font-semibold text-white">Revenue Overview</h3>
+                    <div className="admin-card">
+                        <h3 className="mb-6 text-lg font-bold text-foreground">Revenue Overview</h3>
                         <RevenueChart data={revenueData || []} />
                     </div>
 
                     {/* Customer Growth */}
-                    <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
-                        <h3 className="mb-6 text-lg font-semibold text-white">Customer Growth</h3>
+                    <div className="admin-card">
+                        <h3 className="mb-6 text-lg font-bold text-foreground">Customer Growth</h3>
                         <CustomerGrowth data={customerGrowth || []} />
                     </div>
                 </div>
 
                 <div className="grid gap-6 lg:grid-cols-3">
                     {/* Top Products */}
-                    <div className="lg:col-span-2 rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
-                        <h3 className="mb-6 text-lg font-semibold text-white">Top Performing Products</h3>
+                    <div className="lg:col-span-2 admin-card">
+                        <h3 className="mb-6 text-lg font-bold text-foreground">Top Performing Products</h3>
                         <TopProducts products={topProducts || []} />
                     </div>
 
                     {/* Sales by Region */}
-                    <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
-                        <h3 className="mb-6 text-lg font-semibold text-white">Sales by Region</h3>
+                    <div className="admin-card">
+                        <h3 className="mb-6 text-lg font-bold text-foreground">Sales by Region</h3>
                         <SalesByRegion data={regionalData || []} />
                     </div>
                 </div>

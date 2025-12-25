@@ -21,6 +21,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAdminAuth } from '@/hooks/admin/useAdminAuth';
 import { AlertTriangle, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AdminIdleMonitor } from '@/components/admin/AdminIdleMonitor';
 import type { Permission } from '@/types/admin';
 
 export interface ProtectedAdminRouteProps {
@@ -40,7 +41,7 @@ export interface ProtectedAdminRouteProps {
 export function ProtectedAdminRoute({
     children,
     permission,
-    redirectTo = '/debug-auth', // Redirect to debug-auth instead of home for better dev experience
+    redirectTo = '/admin/login', // Redirect to proper admin login
     showUnauthorized = false,
 }: ProtectedAdminRouteProps) {
     const [, navigate] = useLocation();
@@ -93,8 +94,8 @@ export function ProtectedAdminRoute({
         return null;
     }
 
-    // Authorized - render children
-    return <>{children}</>;
+    // Authorized - render children wrapped with idle monitor
+    return <AdminIdleMonitor>{children}</AdminIdleMonitor>;
 }
 
 /**
@@ -208,8 +209,8 @@ export function useRequireAdmin(permission?: Permission) {
 
     useEffect(() => {
         if (!isLoading && !isAuthorized) {
-            console.warn('[useRequireAdmin] Unauthorized access, redirecting to debug-auth');
-            navigate('/debug-auth');
+            console.warn('[useRequireAdmin] Unauthorized access, redirecting to login');
+            navigate('/admin/login');
         }
     }, [isLoading, isAuthorized, navigate]);
 

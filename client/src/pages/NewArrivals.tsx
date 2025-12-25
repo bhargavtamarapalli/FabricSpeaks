@@ -1,51 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Loading from "@/components/Loading";
-import { Link, useLocation } from "wouter";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ShoppingCart from "@/components/ShoppingCart";
-import AuthModal from "@/components/AuthModal";
+import { useLocation, useSearch } from "wouter";
+import PageLayout from "@/components/PageLayout";
 import ProductGrid from "@/components/ProductGrid";
 import { useProducts, UseProductsParams } from "@/hooks/useProducts";
-import { useAuth } from "@/hooks/useAuth";
 import FilterSidebar from "@/components/FilterSidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { SlidersHorizontal } from "lucide-react";
-import shirt from '@assets/generated_images/Men\'s_white_Oxford_shirt_573f333c.png';
-import briefcase from '@assets/generated_images/Men\'s_brown_leather_briefcase_d5a30cf5.png';
-import { useCart } from "@/hooks/useCart";
 
 export default function NewArrivals() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [, setLocation] = useLocation();
-  const cartQuery = useCart();
-  const cartItems = cartQuery.data?.items || [];
-  const { login, register } = useAuth();
   const [showFilters, setShowFilters] = useState(false);
+
+  // Initialize filters from URL search params
+  const searchParams = useSearch();
+  const params = new URLSearchParams(searchParams);
 
   const [filters, setFilters] = useState<UseProductsParams>({
     limit: 24,
-    categoryId: "new",
-    sortBy: "newest"
+    categoryId: "new", // Always restrict to 'new'
+    sortBy: "newest",
+    // Merge URL params
+    search: params.get("search") || undefined,
+    fabric: params.get("fabric") || undefined,
+    size: params.get("size") || undefined,
+    colour: params.get("colour") || undefined,
+    minPrice: params.get("minPrice") ? Number(params.get("minPrice")) : undefined,
+    maxPrice: params.get("maxPrice") ? Number(params.get("maxPrice")) : undefined,
   });
+
+  // Sync state with URL when params change (e.g. back button)
+  useEffect(() => {
+    const currentParams = new URLSearchParams(searchParams);
+    setFilters(prev => ({
+      ...prev,
+      search: currentParams.get("search") || undefined,
+      fabric: currentParams.get("fabric") || undefined,
+      size: currentParams.get("size") || undefined,
+      colour: currentParams.get("colour") || undefined,
+    }));
+  }, [searchParams]);
 
   const productsQuery = useProducts(filters);
 
   const handleFilterChange = (newFilters: UseProductsParams) => {
-    setFilters(prev => ({ ...prev, ...newFilters, offset: 0 }));
+    // Ensure we keep the categoryId fixed for this page
+    const filtersToApply = { ...newFilters, categoryId: "new" };
+    setFilters(prev => ({ ...prev, ...filtersToApply, offset: 0 }));
+
+    // Optional: Update URL to reflect filters (simplified for now)
+    // In a full implementation, we'd pushState here, but local state is fine for simple navigation
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
-      <Header
-        cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-        onCartClick={() => setIsCartOpen(true)}
-        onAuthClick={() => setIsAuthOpen(true)}
-      />
-
+    <PageLayout>
       <main className="flex-1 py-16 px-6">
         <div className="max-w-7xl mx-auto">
           {/* Page Header */}
@@ -118,37 +128,6 @@ export default function NewArrivals() {
           </div>
         </div>
       </main>
-
-      <Footer />
-
-      <ShoppingCart
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        onCheckout={() => setLocation('/checkout')}
-      />
-
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        onLogin={async (email, password) => {
-          try {
-            await login(email, password);
-            setIsAuthOpen(false);
-          } catch (e) {
-            console.error("Login failed:", e);
-            alert("Login failed. Please check your credentials.");
-          }
-        }}
-        onRegister={async (email, password, name) => {
-          try {
-            await register(email, password);
-            setIsAuthOpen(false);
-          } catch (e) {
-            console.error("Registration failed:", e);
-            alert("Registration failed. Please try again.");
-          }
-        }}
-      />
-    </div >
+    </PageLayout>
   );
 }

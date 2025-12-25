@@ -69,10 +69,10 @@ export function ProductFilters({
         filters.stockStatus;
 
     return (
-        <div className={cn('space-y-4 rounded-xl border border-slate-800/50 bg-slate-900/50 p-4', className)}>
+        <div className={cn('admin-card !p-4', className)}>
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium text-white">
-                    <Filter className="h-4 w-4 text-indigo-400" />
+                <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+                    <Filter className="h-4 w-4 text-primary" />
                     Filters
                 </div>
                 {hasActiveFilters && (
@@ -80,7 +80,7 @@ export function ProductFilters({
                         variant="ghost"
                         size="sm"
                         onClick={onReset}
-                        className="h-8 px-2 text-xs text-slate-400 hover:text-white"
+                        className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
                     >
                         Reset
                         <X className="ml-2 h-3 w-3" />
@@ -91,29 +91,29 @@ export function ProductFilters({
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Search */}
                 <div className="space-y-2">
-                    <Label className="text-xs text-slate-400">Search</Label>
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Search</Label>
                     <div className="relative">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             placeholder="Name, SKU, Description..."
                             value={filters.search || ''}
                             onChange={(e) => handleChange('search', e.target.value)}
-                            className="pl-8 border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
+                            className="pl-9 bg-muted/50 border-border"
                         />
                     </div>
                 </div>
 
                 {/* Category */}
                 <div className="space-y-2">
-                    <Label className="text-xs text-slate-400">Category</Label>
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Category</Label>
                     <Select
                         value={filters.categoryId || 'all'}
                         onValueChange={(val) => handleChange('categoryId', val === 'all' ? undefined : val)}
                     >
-                        <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                        <SelectTrigger className="bg-muted/50 border-border">
                             <SelectValue placeholder="All Categories" />
                         </SelectTrigger>
-                        <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                        <SelectContent>
                             <SelectItem value="all">All Categories</SelectItem>
                             {categories.map((cat) => (
                                 <SelectItem key={cat.id} value={cat.id}>
@@ -126,15 +126,15 @@ export function ProductFilters({
 
                 {/* Status */}
                 <div className="space-y-2">
-                    <Label className="text-xs text-slate-400">Status</Label>
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Status</Label>
                     <Select
                         value={filters.status || 'all'}
                         onValueChange={(val) => handleChange('status', val === 'all' ? undefined : val)}
                     >
-                        <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                        <SelectTrigger className="bg-muted/50 border-border">
                             <SelectValue placeholder="All Statuses" />
                         </SelectTrigger>
-                        <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                        <SelectContent>
                             <SelectItem value="all">All Statuses</SelectItem>
                             {PRODUCT_STATUSES.map((status) => (
                                 <SelectItem key={status.value} value={status.value}>
@@ -147,15 +147,15 @@ export function ProductFilters({
 
                 {/* Stock Status */}
                 <div className="space-y-2">
-                    <Label className="text-xs text-slate-400">Stock Level</Label>
+                    <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Stock Level</Label>
                     <Select
                         value={filters.stockStatus || 'all'}
                         onValueChange={(val) => handleChange('stockStatus', val === 'all' ? undefined : val)}
                     >
-                        <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                        <SelectTrigger className="bg-muted/50 border-border">
                             <SelectValue placeholder="All Stock Levels" />
                         </SelectTrigger>
-                        <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                        <SelectContent>
                             <SelectItem value="all">All Stock Levels</SelectItem>
                             {STOCK_STATUSES.map((status) => (
                                 <SelectItem key={status.value} value={status.value}>

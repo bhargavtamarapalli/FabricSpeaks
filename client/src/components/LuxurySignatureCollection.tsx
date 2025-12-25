@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, X, ArrowUpRight, Ruler, Droplets, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { ShoppingBag, X, ArrowUpRight, Ruler, Droplets, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Plus, Minus, Heart, Check, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import FabricSpeaksLogoV4 from './FabricSpeaksLogoV4';
+import { useAddToCart, useCart } from "@/hooks/useCart";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useDefaultWishlist, useAddToWishlist, useRemoveFromWishlist, useWishlist } from "@/hooks/useWishlist";
+import { Badge } from "@/components/ui/badge";
 
 // --- SUB-COMPONENTS ---
 
@@ -51,11 +56,49 @@ const ReviewsSection = ({ productId }: { productId: string }) => {
     );
 };
 
-const ProductDetailView = ({ product, allProducts, onClose, onSelectProduct }: { product: any, allProducts: any[], onClose: () => void, onSelectProduct: (p: any) => void }) => {
+const ProductDetailView = ({ product: initialProduct, allProducts, onClose, onSelectProduct }: { product: any, allProducts: any[], onClose: () => void, onSelectProduct: (p: any) => void }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isPlaying, setIsPlaying] = useState(true);
     const [isMuted, setIsMuted] = useState(true);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const { toast } = useToast();
+    const addToCart = useAddToCart();
+    const { user } = useAuth();
+
+    // Fetch full product details
+    const { data: fullProduct } = useQuery({
+        queryKey: ['product', initialProduct.id],
+        queryFn: async () => {
+            const res = await fetch(`/api/products/${initialProduct.slug || initialProduct.id}`);
+            if (!res.ok) return initialProduct;
+            return res.json();
+        },
+        initialData: initialProduct
+    });
+
+    const { data: variants } = useQuery({
+        queryKey: ['product-variants', initialProduct.id],
+        queryFn: async () => {
+            const res = await fetch(`/api/products/${initialProduct.id}/variants`);
+            if (!res.ok) return [];
+            const data = await res.json();
+            // Handle both array and { items: [...] } response formats
+            return Array.isArray(data) ? data : (data?.items || []);
+        }
+    });
+
+    const product = fullProduct || initialProduct;
+
+    // Selection State
+    const [selectedSize, setSelectedSize] = useState<string | null>(null);
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
+    const [quantity, setQuantity] = useState(1);
+
+    // Wishlist hooks - only enabled when user is logged in (from line 66)
+    const { data: defaultWishlist } = useDefaultWishlist({ enabled: !!user });
+    const { data: wishlistData } = useWishlist(defaultWishlist?.id);
+    const addToWishlist = useAddToWishlist();
+    const removeFromWishlist = useRemoveFromWishlist();
 
     const { data: recommendations } = useQuery({
         queryKey: ['product-recommendations', product.id],
@@ -66,16 +109,69 @@ const ProductDetailView = ({ product, allProducts, onClose, onSelectProduct }: {
         }
     });
 
+    // Check wishlist status
+    const wishlistItem = useMemo(() => {
+        if (!wishlistData?.items || !product) return null;
+        return wishlistData.items.find(item => item.product_id === product.id);
+    }, [wishlistData, product]);
+
+    const isInWishlist = Boolean(wishlistItem);
+
     // Prepare media array (Video + Images)
-    const media = [];
-    if (product.signature_details?.show_video && product.signature_details?.video) {
-        media.push({ type: 'video', src: product.signature_details.video });
-    }
-    if (product.images && product.images.length > 0) {
-        product.images.forEach((img: string) => media.push({ type: 'image', src: img }));
-    } else if (product.signature_details?.image) {
-        media.push({ type: 'image', src: product.signature_details.image });
-    }
+    const media = useMemo(() => {
+        const m = [];
+        const seenUrls = new Set<string>();
+
+        if (product.signature_details?.show_video && product.signature_details?.video) {
+            m.push({ type: 'video', src: product.signature_details.video });
+            seenUrls.add(product.signature_details.video);
+        }
+
+        // Add main images
+        if (product.images && product.images.length > 0) {
+            product.images.forEach((img: string) => {
+                if (!seenUrls.has(img)) {
+                    m.push({ type: 'image', src: img });
+                    seenUrls.add(img);
+                }
+            });
+        } else if (product.signature_details?.image) {
+            const img = product.signature_details.image;
+            if (!seenUrls.has(img)) {
+                m.push({ type: 'image', src: img });
+                seenUrls.add(img);
+            }
+        }
+
+        // Add color images if not present
+        if (product.color_images) {
+            Object.entries(product.color_images).forEach(([colorName, imgs]: [string, any]) => {
+                const imageArray = Array.isArray(imgs) ? imgs : [imgs];
+                imageArray.forEach((img: string) => {
+                    if (typeof img === 'string' && !seenUrls.has(img)) {
+                        m.push({ type: 'image', src: img, color: colorName });
+                        seenUrls.add(img);
+                    }
+                });
+            });
+        }
+
+        // Add variant images
+        if (variants && variants.length > 0) {
+            variants.forEach((v: any) => {
+                if (v.images && Array.isArray(v.images)) {
+                    v.images.forEach((img: string) => {
+                        if (!seenUrls.has(img)) {
+                            m.push({ type: 'image', src: img });
+                            seenUrls.add(img);
+                        }
+                    });
+                }
+            });
+        }
+
+        return m;
+    }, [product, variants]);
 
     const handleNext = () => {
         setCurrentImageIndex((prev) => (prev + 1) % media.length);
@@ -90,7 +186,7 @@ const ProductDetailView = ({ product, allProducts, onClose, onSelectProduct }: {
         let interval: any;
         const currentMedia = media[currentImageIndex];
 
-        if (currentMedia?.type !== 'video') {
+        if (currentMedia?.type !== 'video' && media.length > 1) {
             interval = setInterval(handleNext, 5000);
         }
 
@@ -100,9 +196,173 @@ const ProductDetailView = ({ product, allProducts, onClose, onSelectProduct }: {
     // Reset index when product changes
     useEffect(() => {
         setCurrentImageIndex(0);
-    }, [product]);
+        setSelectedSize(null);
+        setSelectedColor(null);
+        setQuantity(1);
+    }, [product.id]);
+
+    // Switch image when color is selected
+    useEffect(() => {
+        if (!selectedColor) return;
+
+        let found = false;
+
+        // 1. Check color_images (handles arrays)
+        if (product.color_images && product.color_images[selectedColor]) {
+            const colorImgs = product.color_images[selectedColor];
+            const imageUrl = Array.isArray(colorImgs) ? colorImgs[0] : colorImgs;
+            if (imageUrl) {
+                const index = media.findIndex(m => m.src === imageUrl);
+                if (index !== -1) {
+                    setCurrentImageIndex(index);
+                    found = true;
+                }
+            }
+        }
+
+        // 2. Check variants if not found
+        if (!found && variants) {
+            const variant = variants.find((v: any) => v.colour === selectedColor && v.images?.length > 0);
+            if (variant && variant.images[0]) {
+                const index = media.findIndex(m => m.src === variant.images[0]);
+                if (index !== -1) {
+                    setCurrentImageIndex(index);
+                }
+            }
+        }
+    }, [selectedColor, media, product.color_images, variants]);
 
     const otherProducts = allProducts.filter(p => p.id !== product.id && !recommendations?.find((r: any) => r.id === p.id)).slice(0, 4);
+
+    // --- Logic for Selectors & Cart ---
+
+    const availableSizes = useMemo(() => {
+        if (!product) return [];
+        const rawVariants = variants || product.variants || [];
+
+        if (product.size) {
+            return product.size.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+        if (rawVariants.length > 0) {
+            return Array.from(new Set(rawVariants.map((v: any) => v.size).filter(Boolean)));
+        }
+        return [];
+    }, [product, variants]);
+
+    const availableColors = useMemo(() => {
+        if (!product) return [];
+        let colors: string[] = [];
+        const rawVariants = variants || product.variants || [];
+
+        if (product.color_images && Object.keys(product.color_images).length > 0) {
+            colors = Object.keys(product.color_images);
+        } else if (product.colour) {
+            colors = product.colour.split(',').map((c: string) => c.trim()).filter(Boolean);
+        } else if (rawVariants.length > 0) {
+            colors = Array.from(new Set(rawVariants.map((v: any) => v.colour).filter(Boolean)));
+        }
+
+        // Filter out 'default'
+        return colors.filter(c => c && c.toLowerCase() !== 'default');
+    }, [product, variants]);
+
+    const stockStatus = useMemo(() => {
+        if (!product) return 'unknown';
+        const qty = product.stock_quantity ?? 0;
+        if (qty <= 0) return 'out_of_stock';
+        if (qty <= (product.low_stock_threshold || 5)) return 'low_stock';
+        return 'in_stock';
+    }, [product]);
+
+    const canAddToCart = useMemo(() => {
+        if (stockStatus === 'out_of_stock') return false;
+        if (availableSizes.length > 0 && !selectedSize) return false;
+        if (availableColors.length > 0 && !selectedColor) return false;
+        return true;
+    }, [stockStatus, availableSizes, selectedSize, availableColors, selectedColor]);
+
+    const handleAddToCart = () => {
+        if (!product || !canAddToCart) return;
+
+        addToCart.mutate({
+            product_id: product.id,
+            quantity,
+            size: selectedSize || undefined,
+            colour: selectedColor || undefined,
+        });
+
+        const optionsText = [selectedSize, selectedColor].filter(Boolean).join(' / ');
+        toast({
+            title: "Added to Bag",
+            description: `${product.name}${optionsText ? ` (${optionsText})` : ''} has been added to your cart.`,
+        });
+    };
+
+    const handleWishlistToggle = () => {
+        if (!user) {
+            toast({
+                title: "Sign in required",
+                description: "Please sign in to save items to your wishlist.",
+            });
+            return;
+        }
+        if (!product || !defaultWishlist) return;
+
+        // If removing from wishlist, no validation needed
+        if (isInWishlist && wishlistItem) {
+            removeFromWishlist.mutate({ wishlistId: defaultWishlist.id, itemId: wishlistItem.id });
+            toast({ title: "Removed from Wishlist", description: "Item removed from wishlist." });
+            return;
+        }
+
+        // For adding to wishlist, require size and color selection if available
+        if (availableSizes.length > 0 && !selectedSize) {
+            toast({
+                title: "Select a Size",
+                description: "Please select a size before adding to your wishlist.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (availableColors.length > 0 && !selectedColor) {
+            toast({
+                title: "Select a Color",
+                description: "Please select a color before adding to your wishlist.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        // Find the matching variant if size/color is selected
+        let variantId: string | undefined;
+        if (variants && (selectedSize || selectedColor)) {
+            const matchingVariant = variants.find((v: any) => {
+                const sizeMatch = !selectedSize || v.size === selectedSize;
+                const colorMatch = !selectedColor || v.colour === selectedColor;
+                return sizeMatch && colorMatch && v.status === 'active';
+            });
+            variantId = matchingVariant?.id;
+        }
+
+        addToWishlist.mutate({
+            wishlistId: defaultWishlist.id,
+            productId: product.id,
+            variantId: variantId || undefined,
+        });
+
+        const optionsText = [selectedSize, selectedColor].filter(Boolean).join(' / ');
+        toast({
+            title: "Added to Wishlist",
+            description: `${product.name}${optionsText ? ` (${optionsText})` : ''} saved to wishlist.`
+        });
+    };
+
+    // Clean Description (remove HTML tags)
+    const cleanDescription = (html: string) => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        return doc.body.textContent || "";
+    };
 
     return (
         <motion.div
@@ -184,18 +444,123 @@ const ProductDetailView = ({ product, allProducts, onClose, onSelectProduct }: {
                                 )}
                             </div>
 
-                            <h1 className="font-display text-5xl md:text-6xl text-stone-900 dark:text-white mb-4 leading-tight">{product.name}</h1>
+                            <div className="flex justify-between items-start">
+                                <h1 className="font-display text-5xl md:text-6xl text-stone-900 dark:text-white mb-4 leading-tight">{product.name}</h1>
+                                <button
+                                    onClick={handleWishlistToggle}
+                                    disabled={addToWishlist.isPending || removeFromWishlist.isPending}
+                                    className={`p-3 rounded-full transition-colors ${isInWishlist
+                                        ? 'text-red-500 bg-red-50 dark:bg-red-900/20'
+                                        : 'text-stone-400 hover:text-red-500 hover:bg-stone-50'
+                                        }`}
+                                >
+                                    <Heart className={`w-6 h-6 ${isInWishlist ? 'fill-current' : ''}`} />
+                                </button>
+                            </div>
 
-                            <div className="flex items-baseline gap-4 mb-8">
-                                <span className="text-2xl font-light text-stone-900 dark:text-white">₹{product.sale_price || product.price}</span>
-                                {product.sale_price && (
-                                    <span className="text-lg text-stone-400 line-through">₹{product.price}</span>
+                            {/* Price & Stock Badge */}
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-2xl font-light text-stone-900 dark:text-white">₹{product.sale_price || product.price}</span>
+                                    {product.sale_price && (
+                                        <span className="text-lg text-stone-400 line-through">₹{product.price}</span>
+                                    )}
+                                </div>
+
+                                {stockStatus === 'in_stock' && (
+                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800">
+                                        <Check className="w-3 h-3 mr-1" /> In Stock
+                                    </Badge>
+                                )}
+                                {stockStatus === 'low_stock' && (
+                                    <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800">
+                                        Only {product.stock_quantity} left
+                                    </Badge>
+                                )}
+                                {stockStatus === 'out_of_stock' && (
+                                    <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800">
+                                        Out of Stock
+                                    </Badge>
                                 )}
                             </div>
 
-                            <p className="text-stone-600 dark:text-stone-300 leading-relaxed mb-12 text-lg font-light">
-                                {product.description}
+                            {/* Description - CLEANED */}
+                            <p className="text-stone-600 dark:text-stone-300 leading-relaxed mb-8 text-lg font-light">
+                                {cleanDescription(product.description)}
                             </p>
+
+                            {/* Selectors */}
+                            {availableSizes.length > 0 && (
+                                <div className="mb-6">
+                                    <label className="block text-sm font-bold text-stone-900 dark:text-white mb-3 uppercase tracking-wider">
+                                        Size {!selectedSize && <span className="text-red-500">*</span>}
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {availableSizes.map((size: any) => (
+                                            <button
+                                                key={size}
+                                                onClick={() => setSelectedSize(size)}
+                                                className={`px-4 py-2 border rounded-md text-sm font-medium transition-all ${selectedSize === size
+                                                    ? 'bg-stone-900 text-white border-stone-900 dark:bg-white dark:text-black dark:border-white'
+                                                    : 'bg-white text-stone-700 border-stone-300 hover:border-stone-900 dark:bg-neutral-900 dark:text-neutral-300 dark:border-neutral-700'
+                                                    }`}
+                                            >
+                                                {size}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {availableColors.length > 0 && (
+                                <div className="mb-6">
+                                    <label className="block text-sm font-bold text-stone-900 dark:text-white mb-3 uppercase tracking-wider">
+                                        Color {!selectedColor && <span className="text-red-500">*</span>}
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {availableColors.map((color: any) => (
+                                            <button
+                                                key={color}
+                                                onClick={() => setSelectedColor(color)}
+                                                className={`px-4 py-2 border rounded-md text-sm font-medium transition-all ${selectedColor === color
+                                                    ? 'bg-stone-900 text-white border-stone-900 dark:bg-white dark:text-black dark:border-white'
+                                                    : 'bg-white text-stone-700 border-stone-300 hover:border-stone-900 dark:bg-neutral-900 dark:text-neutral-300 dark:border-neutral-700'
+                                                    }`}
+                                            >
+                                                {color}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Quantity */}
+                            <div className="mb-8">
+                                <label className="block text-sm font-bold text-stone-900 dark:text-white mb-3 uppercase tracking-wider">
+                                    Quantity
+                                </label>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center border border-stone-300 dark:border-neutral-700 rounded-md">
+                                        <button
+                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                            className="p-3 hover:bg-stone-100 dark:hover:bg-neutral-800 transition-colors"
+                                            disabled={quantity <= 1}
+                                        >
+                                            <Minus className="w-4 h-4 text-stone-600 dark:text-neutral-400" />
+                                        </button>
+                                        <span className="px-6 py-2 text-lg font-medium text-stone-900 dark:text-white min-w-[60px] text-center">
+                                            {quantity}
+                                        </span>
+                                        <button
+                                            onClick={() => setQuantity(Math.min(quantity + 1, product.stock_quantity || 99))}
+                                            className="p-3 hover:bg-stone-100 dark:hover:bg-neutral-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            disabled={quantity >= (product.stock_quantity || 99)}
+                                        >
+                                            <Plus className="w-4 h-4 text-stone-600 dark:text-neutral-400" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
 
                             {/* Details Grid */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 border-y border-stone-100 dark:border-neutral-800 py-8">
@@ -219,9 +584,27 @@ const ProductDetailView = ({ product, allProducts, onClose, onSelectProduct }: {
                                 )}
                             </div>
 
-                            <button className="w-full bg-stone-900 dark:bg-white text-white dark:text-black py-4 px-8 rounded-full hover:bg-stone-800 dark:hover:bg-neutral-200 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-3 mb-16">
-                                <ShoppingBag size={20} />
-                                <span className="font-medium tracking-wide">Add to Collection</span>
+                            <button
+                                onClick={handleAddToCart}
+                                disabled={!canAddToCart || addToCart.isPending}
+                                className={`w-full py-4 px-8 rounded-full transition-all transform hover:scale-[1.02] flex items-center justify-center gap-3 mb-16 shadow-lg ${canAddToCart
+                                    ? 'bg-stone-900 dark:bg-white text-white dark:text-black hover:bg-stone-800 dark:hover:bg-neutral-200'
+                                    : 'bg-stone-400 dark:bg-neutral-700 text-white dark:text-neutral-400 cursor-not-allowed'
+                                    }`}
+                            >
+                                {addToCart.isPending ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    <ShoppingBag size={20} />
+                                )}
+                                <span className="font-medium tracking-wide">
+                                    {stockStatus === 'out_of_stock'
+                                        ? 'Out of Stock'
+                                        : !canAddToCart
+                                            ? 'Select Options'
+                                            : 'Add to Bag'
+                                    }
+                                </span>
                             </button>
                         </div>
                     </div>
@@ -293,17 +676,37 @@ export default function LuxurySignatureCollection() {
     const [stackHovered, setStackHovered] = useState(false);
     const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
     const [, setLocation] = useLocation();
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Scroll Animation Setup - must be at top level before any returns
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['signature-products'],
         queryFn: async () => {
-            const res = await fetch('/api/products?isSignature=true');
+            const res = await fetch('/api/products/signature');
             if (!res.ok) throw new Error('Failed to fetch signature products');
             return res.json();
         }
     });
 
     const products = data?.items || [];
+
+    const { scrollYProgress } = useScroll({
+        target: containerRef,
+        offset: ["start start", "end end"]
+    });
+
+    const activeIndex = useTransform(scrollYProgress, [0, 1], [0, Math.max(0, products.length - 1)]);
+    const springIndex = useSpring(activeIndex, { stiffness: 200, damping: 30 });
+
+    // Sync visual index for class switching if needed
+    useEffect(() => {
+        const unsubscribe = springIndex.on("change", (latest) => {
+            setCurrentIndex(Math.round(latest));
+        });
+        return unsubscribe;
+    }, [springIndex]);
 
     // 3D Parallax Tilt Handler
     const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>, id: string) => {
@@ -327,6 +730,7 @@ export default function LuxurySignatureCollection() {
         // CSS transitions handle the smooth return to default state
     };
 
+    // Loading state
     if (isLoading) {
         return (
             <div className="min-h-[600px] w-full flex items-center justify-center bg-stone-100 dark:bg-neutral-900">
@@ -335,117 +739,89 @@ export default function LuxurySignatureCollection() {
         );
     }
 
+    // Error state
     if (error) return null;
 
-    return (
-        <div className="min-h-[600px] w-full bg-stone-100 dark:bg-neutral-900 p-8 flex flex-col items-center justify-center relative overflow-hidden font-sans transition-colors duration-300">
-            {/* Background Watermark */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
-                <span className="text-[15vw] font-display font-bold text-stone-200/50 dark:text-neutral-800/30 whitespace-nowrap select-none">
-                    SIGNATURE
-                </span>
-            </div>
-
-            {/* Section Header */}
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="text-center mb-16 z-10 cursor-pointer relative"
-                onClick={() => setLocation('/signature-collection')}
-            >
-                <div className="flex items-center justify-center gap-2 mb-4">
-                    <div className="h-6 w-6 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-serif font-bold text-xs">S</div>
-                    <span className="font-serif text-sm font-bold tracking-wide dark:text-neutral-200">SIGNATURE</span>
+    // Empty state
+    if (products.length === 0) {
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-stone-100 dark:bg-neutral-900 overflow-hidden">
+                <FabricSpeaksLogoV4 className="w-32 h-32 text-stone-900 dark:text-white mb-8 opacity-20" />
+                <h2 className="font-display text-4xl text-stone-900 dark:text-white mb-4">The Collection</h2>
+                <p className="text-stone-500 dark:text-neutral-400 font-light tracking-wide">
+                    New signature pieces arriving soon.
+                </p>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+                    <span className="text-[15vw] font-display font-bold text-stone-200/50 dark:text-neutral-800/30 whitespace-nowrap select-none">
+                        SIGNATURE
+                    </span>
                 </div>
-                <h2 className="font-display text-5xl md:text-6xl text-stone-900 dark:text-white">The Collection</h2>
-                <div className="w-12 h-1 bg-amber-500 mx-auto mt-6" />
-            </motion.div>
+            </div>
+        );
+    }
 
-            {/* Central Wallet Stack */}
-            <div
-                className="relative h-96 w-full max-w-5xl flex items-center justify-center perspective-1000 z-0"
-                onMouseEnter={() => setStackHovered(true)}
-                onMouseLeave={() => { setStackHovered(false); setHoveredCardId(null); }}
-            >
-                {products.map((product: any, index: number) => {
-                    const centerIndex = (products.length - 1) / 2;
-                    const offset = index - centerIndex;
-                    const isCardHovered = hoveredCardId === product.id;
-                    const isAnyHovered = hoveredCardId !== null;
+    return (
+        <div ref={containerRef} className="relative w-full bg-stone-100 dark:bg-neutral-900 font-sans transition-colors duration-300 h-[400vh]">
+            <div className="sticky top-0 h-screen flex flex-col items-center justify-center overflow-hidden">
 
-                    // Wallet Spread Logic
-                    const xSpread = stackHovered ? 140 : 50;
-                    const xPos = offset * xSpread;
+                {/* Background Watermark */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+                    <span className="text-[15vw] font-display font-bold text-stone-200/50 dark:text-neutral-800/30 whitespace-nowrap select-none">
+                        SIGNATURE
+                    </span>
+                </div>
 
-                    // Base Transforms
-                    let rotation = isCardHovered ? 0 : (stackHovered ? 0 : offset * 4);
-                    let scale = isCardHovered ? 1.2 : (stackHovered ? 1.05 : 1 - Math.abs(offset) * 0.05);
-                    let zIndex = isCardHovered ? 50 : index;
+                {/* Section Header */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.8 }}
+                    className="text-center mb-16 z-10 cursor-pointer relative"
+                    onClick={() => setLocation('/signature-collection')}
+                >
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <div className="h-6 w-6 bg-black dark:bg-white text-white dark:text-black flex items-center justify-center font-serif font-bold text-xs">S</div>
+                        <span className="font-serif text-sm font-bold tracking-wide dark:text-neutral-200">SIGNATURE</span>
+                    </div>
+                    <h2 className="font-display text-5xl md:text-6xl text-stone-900 dark:text-white">The Collection</h2>
+                    <div className="w-12 h-1 bg-amber-500 mx-auto mt-6" />
+                </motion.div>
 
-                    // Dimming Logic
-                    const opacity = isAnyHovered && !isCardHovered ? 0.4 : 1;
-                    const filter = isAnyHovered && !isCardHovered ? 'blur(2px)' : 'none';
+                {/* Central Wallet Stack */}
+                <div
+                    className="relative h-96 w-full max-w-5xl flex items-center justify-center perspective-1000 z-0"
+                >
+                    {products.map((product: any, index: number) => {
+                        return (
+                            <CardItem
+                                key={product.id}
+                                product={product}
+                                index={index}
+                                activeIndex={springIndex}
+                                total={products.length}
+                                onSelect={() => setSelectedProduct(product)}
+                            />
+                        );
+                    })}
+                </div>
 
-                    // Ambient Shadow Logic
-                    const colorHex = product.signature_details?.colorHex || '#000000';
-                    const boxShadow = isCardHovered
-                        ? `0 25px 50px -12px ${colorHex}80` // Colored ambient glow
-                        : '0 25px 50px -12px rgba(0, 0, 0, 0.25)';
-
-                    const image = product.signature_details?.image || product.images?.[0];
-
-                    return (
-                        <div
-                            key={product.id}
-                            onClick={() => {
-                                console.log("Card clicked:", product.name);
-                                setSelectedProduct(product);
-                            }}
-                            onMouseEnter={(e) => {
-                                e.stopPropagation();
-                                setHoveredCardId(product.id);
-                            }}
-                            onMouseMove={(e) => handleCardMouseMove(e, product.id)}
-                            onMouseLeave={(e) => {
-                                setHoveredCardId(null);
-                                resetCardTransform(e);
-                            }}
-                            className="absolute w-64 h-96 rounded-xl cursor-pointer transition-all duration-300 ease-out transform-style-3d"
-                            style={{
-                                transform: `translateX(${xPos}px) rotateZ(${rotation}deg) scale(${scale})`,
-                                zIndex: zIndex,
-                                opacity: opacity,
-                                filter: filter
-                            }}
-                        >
-                            {/* Gold Foil Wrapper */}
-                            <div
-                                className="w-full h-full rounded-xl overflow-hidden relative group bg-gradient-to-br from-[#bf953f] via-[#fcf6ba] to-[#b38728] p-[4px] shadow-2xl"
-                                style={{ boxShadow }}
-                            >
-                                <div className="w-full h-full bg-white rounded-lg overflow-hidden relative">
-                                    <img
-                                        src={image}
-                                        alt={product.name}
-                                        className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                                    />
-
-                                    {/* Content Overlay */}
-                                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
-
-                                    <div className="absolute bottom-6 left-6 text-white opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-4 group-hover:translate-y-0 duration-300 drop-shadow-lg pointer-events-none">
-                                        <p className="text-[10px] font-bold tracking-widest mb-1 shadow-black text-[#fcf6ba]">
-                                            {product.signature_details?.tag}
-                                        </p>
-                                        <h3 className="font-display text-xl shadow-black">{product.name}</h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                {/* Scroll Indicator */}
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, transition: { delay: 1 } }}
+                    className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+                >
+                    <span className="text-xs uppercase tracking-widest text-neutral-400">Scroll to Explore</span>
+                    <div className="w-[1px] h-8 bg-neutral-300 dark:bg-neutral-700 relative overflow-hidden">
+                        <motion.div
+                            className="absolute top-0 w-full bg-black dark:bg-white"
+                            style={{ height: "30%", top: "0%" }}
+                            animate={{ top: ["0%", "100%"] }}
+                            transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+                        />
+                    </div>
+                </motion.div>
             </div>
 
             {/* Product Detail Modal */}
@@ -460,24 +836,103 @@ export default function LuxurySignatureCollection() {
                     />
                 )}
             </AnimatePresence>
-
-            {/* Required Animations */}
-            <style>{`
-                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-                .animate-fadeIn { animation: fadeIn 0.5s ease-out forwards; }
-                
-                @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-                .animate-slideUpFade { animation: slideUpFade 0.6s ease-out forwards; }
-
-                @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-                .animate-scaleIn { animation: scaleIn 0.3s ease-out forwards; }
-
-                @keyframes revealParallax { 0% { transform: scale(1.1); opacity: 0; } 100% { transform: scale(1.0); opacity: 1; } }
-                .animate-revealParallax { animation: revealParallax 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-                
-                .perspective-1000 { perspective: 1000px; }
-                .transform-style-3d { transform-style: preserve-3d; }
-            `}</style>
         </div>
     );
+}
+
+// Extracted Card Item for proper hook usage
+const CardItem = ({ product, index, activeIndex, total, onSelect }: any) => {
+    // We use useTransform to map the global scroll 'index' to this card's specific state
+    // index - activeIndex represents how far this card is from the center (0)
+
+    // Position Calculation based on distance from active index
+    // offset < 0: card is to the left (passed)
+    // offset > 0: card is to the right (coming up)
+
+    // We want a "cover flow" / "wallet stack" effect
+
+    // Transform values
+    const offset = useTransform(activeIndex, (v: number) => index - v);
+
+    const x = useTransform(offset, (o) => {
+        // Center is 0. 
+        // Right items stacked closely: 50px per item
+        // Left items spread out significantly or fly off: -300px per item
+        if (o >= 0) return o * 60;
+        return o * 300; // Passed items fly left fast
+    });
+
+    const scale = useTransform(offset, (o) => {
+        // Active item (0) is largest (1.1). Neighbors smaller.
+        const dist = Math.abs(o);
+        if (dist < 0.5) return 1.1; // Center
+        return Math.max(0.8, 1 - dist * 0.1);
+    });
+
+    const rotateZ = useTransform(offset, (o) => {
+        // Slight fanning rotation
+        return o * 4;
+    });
+
+    const zIndex = useTransform(offset, (o) => {
+        // Visual stacking order.
+        // If o > 0 (right), we want them behind (lower z). 
+        // If o < 0 (left), we want them on top? Or behind?
+        // Usually cover flow: center is highest.
+        return 100 - Math.abs(Math.round(o));
+    });
+
+    const opacity = useTransform(offset, (o) => {
+        // Fade out far items
+        if (o < -1.5) return 0; // Fade out executed items
+        if (o > 4) return 0; // Hide far future items
+        return 1;
+    });
+
+    // Visual filtering for "inactive" cards
+    const blur = useTransform(offset, (o) => {
+        if (Math.abs(o) < 0.5) return "blur(0px)";
+        return "blur(2px)";
+    });
+
+    return (
+        <motion.div
+            onClick={onSelect}
+            style={{
+                x,
+                scale,
+                rotateZ,
+                zIndex,
+                opacity,
+                filter: blur,
+                position: 'absolute'
+            }}
+            className="w-72 h-[450px] rounded-xl cursor-pointer shadow-2xl origin-bottom"
+        >
+            {/* Gold Foil Wrapper */}
+            <div
+                className="w-full h-full rounded-xl overflow-hidden relative group bg-gradient-to-br from-[#bf953f] via-[#fcf6ba] to-[#b38728] p-[4px] shadow-2xl"
+            >
+                <div className="w-full h-full bg-white rounded-lg overflow-hidden relative">
+                    <img
+                        src={product.signature_details?.image || product.images?.[0]}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                    />
+
+                    {/* Content Overlay */}
+                    <div className="absolute inset-0 bg-black/10 transition-colors" />
+
+                    <div className="absolute bottom-8 left-6 text-white drop-shadow-lg pointer-events-none">
+                        <p className="text-[10px] font-bold tracking-widest mb-2 shadow-black text-[#fcf6ba]">
+                            {product.signature_details?.tag}
+                        </p>
+                        <h3 className="font-display text-2xl shadow-black">{product.name}</h3>
+                        <p className="text-white/80 text-sm mt-1">₹{product.price}</p>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+
 }

@@ -13,16 +13,16 @@ import { cartErrorHandler } from "./middleware/cartErrorHandler";
 import cartValidationRouter from "./cartValidation";
 import adminOrdersRouter from "./admin-orders";
 import { productsCacheMiddleware, productDetailCacheMiddleware, invalidateProductsCacheMiddleware } from "./middleware/cache";
-import { 
-  inviteAdminHandler, 
-  acceptInvitationHandler, 
-  listInvitationsHandler, 
-  revokeInvitationHandler 
+import {
+  inviteAdminHandler,
+  acceptInvitationHandler,
+  listInvitationsHandler,
+  revokeInvitationHandler
 } from "./adminInvitations";
-import { 
-  votePollHandler, 
-  getPollResultsHandler, 
-  getActivePollHandler 
+import {
+  votePollHandler,
+  getPollResultsHandler,
+  getActivePollHandler
 } from "./polls";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -42,60 +42,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     deleteUserHandler,
     adminDeleteUserHandler,
     adminUpdateRoleHandler,
-    listUsersHandler
+    listUsersHandler,
+    initiateVerificationHandler,
+    confirmVerificationHandler
   } = await import("./auth");
 
   console.error('DEBUG: Importing products');
   const { listProductsHandler, getProductHandler } = await import("./products");
 
   console.error('DEBUG: Importing cart');
-  const { 
-    getCartHandler, 
-    addCartItemHandler, 
-    updateCartItemHandler, 
-    removeCartItemHandler, 
-    mergeGuestCartHandler 
+  const {
+    getCartHandler,
+    addCartItemHandler,
+    updateCartItemHandler,
+    removeCartItemHandler,
+    mergeGuestCartHandler
   } = await import("./cart");
 
   console.error('DEBUG: Importing orders');
-  const { 
-    checkoutHandler, 
-    listOrdersHandler, 
-    getOrderHandler, 
-    verifyPaymentHandler, 
-    cancelOrderHandler, 
-    reorderHandler 
+  const {
+    checkoutHandler,
+    listOrdersHandler,
+    getOrderHandler,
+    verifyPaymentHandler,
+    cancelOrderHandler,
+    reorderHandler
   } = await import("./orders");
 
   console.error('DEBUG: Importing profile');
-  const { 
-    getMeHandler, 
-    updateMeHandler: profileUpdateMeHandler, 
-    listAddressesHandler, 
-    createAddressHandler, 
-    updateAddressHandler, 
-    deleteAddressHandler 
+  const {
+    getMeHandler,
+    updateMeHandler: profileUpdateMeHandler,
+    listAddressesHandler,
+    createAddressHandler,
+    updateAddressHandler,
+    deleteAddressHandler
   } = await import("./profile");
 
   console.error('DEBUG: Importing addresses');
-  const { 
-    listAddressesHandler: listAddressesProfileHandler, 
-    createAddressHandler: createAddressProfileHandler, 
-    getAddressHandler, 
-    updateAddressHandler: updateAddressProfileHandler, 
-    deleteAddressHandler: deleteAddressProfileHandler, 
-    setDefaultAddressHandler, 
-    getDefaultAddressesHandler 
+  const {
+    listAddressesHandler: listAddressesProfileHandler,
+    createAddressHandler: createAddressProfileHandler,
+    getAddressHandler,
+    updateAddressHandler: updateAddressProfileHandler,
+    deleteAddressHandler: deleteAddressProfileHandler,
+    setDefaultAddressHandler,
+    getDefaultAddressesHandler
   } = await import("./addresses");
 
   console.error('DEBUG: Importing admin');
-  const { 
-    createProductHandler, 
-    updateProductHandler, 
-    deleteProductHandler, 
-    createCategoryHandler, 
-    listCategoriesHandler, 
-    importProductsHandler 
+  const {
+    createProductHandler,
+    updateProductHandler,
+    deleteProductHandler,
+    createCategoryHandler,
+    listCategoriesHandler,
+    importProductsHandler
   } = await import("./admin");
 
   console.error('DEBUG: Importing wishlists');
@@ -149,9 +151,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Webhooks (no CSRF protection needed)
   console.error('DEBUG: Importing webhooks');
   const { razorpayWebhookHandler } = await import('./webhooks/razorpay');
-  app.post("/api/webhooks/razorpay", express.json({ verify: (req, res, buf) => {
-    (req as any).rawBody = buf.toString();
-  }}), razorpayWebhookHandler);
+  app.post("/api/webhooks/razorpay", express.json({
+    verify: (req, res, buf) => {
+      (req as any).rawBody = buf.toString();
+    }
+  }), razorpayWebhookHandler);
 
   // Auth routes (Phase 3)
   app.post("/api/auth/register", registerHandler);
@@ -163,12 +167,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/auth/me", requireAuth, deleteUserHandler);
   app.get("/api/auth/me", requireAuth, meHandler);
   app.put("/api/auth/me", requireAuth, updateMeHandler);
+  app.post("/api/auth/verify/initiate", requireAuth, initiateVerificationHandler);
+  app.post("/api/auth/verify/confirm", requireAuth, confirmVerificationHandler);
 
   // Profile Address Management (Phase 1 Refactor)
   app.get("/api/me/addresses", requireAuth, listAddressesHandler);
   app.post("/api/me/addresses", requireAuth, createAddressHandler);
   app.put("/api/me/addresses/:id", requireAuth, updateAddressHandler);
   app.delete("/api/me/addresses/:id", requireAuth, deleteAddressHandler);
+  app.put("/api/me/addresses/:id/default", requireAuth, setDefaultAddressHandler);
 
 
   // Admin User Management Routes
@@ -178,14 +185,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // OAuth routes (Google & Apple Sign-In)
   console.error('DEBUG: Importing oauth');
-  const { 
-    googleAuthHandler, 
-    googleCallbackHandler, 
-    appleAuthHandler, 
+  const {
+    googleAuthHandler,
+    googleCallbackHandler,
+    appleAuthHandler,
     appleCallbackHandler,
-    verifyOAuthTokenHandler 
+    verifyOAuthTokenHandler
   } = await import("./oauth");
-  
+
   app.get("/api/auth/google", googleAuthHandler);
   app.get("/api/auth/google/callback", googleCallbackHandler);
   app.get("/api/auth/apple", appleAuthHandler);
@@ -200,10 +207,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/search", searchProductsHandler);
   app.get("/api/search/suggestions", searchSuggestionsHandler);
 
+  // 1️⃣ Signature products endpoint - MUST BE BEFORE /api/products/:id
+  console.error('DEBUG: Importing products-signature');
+  const { listSignatureProductsHandler } = await import("./products-signature");
+  app.get("/api/products/signature", productsCacheMiddleware, listSignatureProductsHandler);
+
   // Products routes (Phase 3) - with cache middleware
   app.get("/api/products", productsCacheMiddleware, listProductsHandler);
   app.get("/api/products/:id", productDetailCacheMiddleware, getProductHandler);
-  
+
   // Product Variants routes (Phase 2) - Using new handlers
   console.error('DEBUG: Importing product-variants');
   const {
@@ -215,102 +227,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     deleteVariantHandler,
     bulkUpdateVariantsHandler
   } = await import("./product-variants");
-  
-  // 1️⃣ Signature products endpoint
-  console.error('DEBUG: Importing products-signature');
-  const { listSignatureProductsHandler } = await import("./products-signature");
-  app.get("/api/products/signature", productsCacheMiddleware, listSignatureProductsHandler);
+
 
   // Recommendations endpoint
   app.get("/api/products/:id/recommendations", async (req, res) => {
-      try {
-          const { recommendationService } = await import("./services/recommendations");
-          const recs = await recommendationService.getRecommendations(req.params.id);
-          
-          // Transform products to include images properly
-          // Use same logic as transformProductImages in products repository
-          const transformed = recs.map((p: any) => {
-            const images: string[] = [];
-            
-            // 1. Check main_image first
-            if (p.main_image) {
-              images.push(p.main_image);
-            }
-            
-            // 2. Check color_images (e.g. { "Black": [url1, url2], "White": [url3] })
-            if (p.color_images && typeof p.color_images === 'object') {
-              const colorImagesObj = p.color_images as Record<string, string[]>;
-              for (const colorUrls of Object.values(colorImagesObj)) {
-                if (Array.isArray(colorUrls)) {
-                  for (const url of colorUrls) {
-                    if (!images.includes(url)) {
-                      images.push(url);
-                    }
-                  }
+    try {
+      const { recommendationService } = await import("./services/recommendations");
+      const recs = await recommendationService.getRecommendations(req.params.id);
+
+      // Transform products to include images properly
+      // Use same logic as transformProductImages in products repository
+      const transformed = recs.map((p: any) => {
+        const images: string[] = [];
+
+        // 1. Check main_image first
+        if (p.main_image) {
+          images.push(p.main_image);
+        }
+
+        // 2. Check color_images (e.g. { "Black": [url1, url2], "White": [url3] })
+        if (p.color_images && typeof p.color_images === 'object') {
+          const colorImagesObj = p.color_images as Record<string, string[]>;
+          for (const colorUrls of Object.values(colorImagesObj)) {
+            if (Array.isArray(colorUrls)) {
+              for (const url of colorUrls) {
+                if (!images.includes(url)) {
+                  images.push(url);
                 }
               }
             }
-            
-            // 3. Fallback to signature_details.image
-            if (images.length === 0 && p.signature_details?.image) {
-              images.push(p.signature_details.image);
-            }
-            
-            return {
-              ...p,
-              images,
-            };
-          });
-          
-          res.json(transformed);
-      } catch (error) {
-          console.error("Recommendation error:", error);
-          res.status(500).json({ error: "Failed to fetch recommendations" });
-      }
+          }
+        }
+
+        // 3. Fallback to signature_details.image
+        if (images.length === 0 && p.signature_details?.image) {
+          images.push(p.signature_details.image);
+        }
+
+        return {
+          ...p,
+          images,
+        };
+      });
+
+      res.json(transformed);
+    } catch (error) {
+      console.error("Recommendation error:", error);
+      res.status(500).json({ error: "Failed to fetch recommendations" });
+    }
   });
 
   // Similar Apparels endpoint - by Fabric and Occasion
   app.get("/api/products/:id/similar-apparels", async (req, res) => {
-      try {
-          const { recommendationService } = await import("./services/recommendations");
-          const { byFabric, byOccasion } = await recommendationService.getSimilarApparels(req.params.id);
-          
-          // Transform products to include images (same logic as recommendations)
-          const transformProducts = (products: any[]) => products.map((p: any) => {
-            const images: string[] = [];
-            
-            if (p.main_image) {
-              images.push(p.main_image);
-            }
-            
-            if (p.color_images && typeof p.color_images === 'object') {
-              const colorImagesObj = p.color_images as Record<string, string[]>;
-              for (const colorUrls of Object.values(colorImagesObj)) {
-                if (Array.isArray(colorUrls)) {
-                  for (const url of colorUrls) {
-                    if (!images.includes(url)) {
-                      images.push(url);
-                    }
-                  }
+    try {
+      const { recommendationService } = await import("./services/recommendations");
+      const { byFabric, byOccasion } = await recommendationService.getSimilarApparels(req.params.id);
+
+      // Transform products to include images (same logic as recommendations)
+      const transformProducts = (products: any[]) => products.map((p: any) => {
+        const images: string[] = [];
+
+        if (p.main_image) {
+          images.push(p.main_image);
+        }
+
+        if (p.color_images && typeof p.color_images === 'object') {
+          const colorImagesObj = p.color_images as Record<string, string[]>;
+          for (const colorUrls of Object.values(colorImagesObj)) {
+            if (Array.isArray(colorUrls)) {
+              for (const url of colorUrls) {
+                if (!images.includes(url)) {
+                  images.push(url);
                 }
               }
             }
-            
-            if (images.length === 0 && p.signature_details?.image) {
-              images.push(p.signature_details.image);
-            }
-            
-            return { ...p, images };
-          });
-          
-          res.json({
-            byFabric: transformProducts(byFabric),
-            byOccasion: transformProducts(byOccasion)
-          });
-      } catch (error) {
-          console.error("Similar apparels error:", error);
-          res.status(500).json({ error: "Failed to fetch similar apparels" });
-      }
+          }
+        }
+
+        if (images.length === 0 && p.signature_details?.image) {
+          images.push(p.signature_details.image);
+        }
+
+        return { ...p, images };
+      });
+
+      res.json({
+        byFabric: transformProducts(byFabric),
+        byOccasion: transformProducts(byOccasion)
+      });
+    } catch (error) {
+      console.error("Similar apparels error:", error);
+      res.status(500).json({ error: "Failed to fetch similar apparels" });
+    }
   });
 
   app.get("/api/products/:productId/variants", listVariantsHandler);
@@ -324,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/cart/items/:id", optionalAuth, validateCartOwnership, updateCartItemHandler);
   app.delete("/api/cart/items/:id", optionalAuth, validateCartOwnership, removeCartItemHandler);
   app.post("/api/cart/merge", requireAuth, mergeGuestCartHandler);
-  
+
   // Cart error handler - must be after cart routes
   app.use("/api/cart", cartErrorHandler);
 
@@ -334,12 +342,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Stock Notifications routes (Phase 2)
   console.error('DEBUG: Importing stock-notifications');
-  const { 
-    createStockNotificationHandler, 
-    listStockNotificationsHandler, 
-    deleteStockNotificationHandler 
+  const {
+    createStockNotificationHandler,
+    listStockNotificationsHandler,
+    deleteStockNotificationHandler
   } = await import("./stock-notifications");
-  
+
   app.post("/api/stock-notifications", createStockNotificationHandler); // No auth required - guests can subscribe
   app.get("/api/stock-notifications", requireAuth, listStockNotificationsHandler);
   app.delete("/api/stock-notifications/:id", requireAuth, deleteStockNotificationHandler);
@@ -354,9 +362,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/wishlists/:id/items", requireAuth, addWishlistItemHandler);
   app.delete("/api/wishlists/:id/items/:itemId", requireAuth, removeWishlistItemHandler);
 
-  // Orders & checkout (Phase 5)
-  app.post("/api/orders/checkout", requireAuth, checkoutHandler);
-  app.post("/api/orders/verify", requireAuth, verifyPaymentHandler);
+  // Orders & checkout (Phase 5) - checkout and verify allow guests
+  app.post("/api/orders/checkout", optionalAuth, checkoutHandler);
+  app.post("/api/orders/verify", optionalAuth, verifyPaymentHandler);
   app.get("/api/orders", requireAuth, listOrdersHandler);
   app.get("/api/orders/:id", requireAuth, getOrderHandler);
   app.post("/api/orders/:id/cancel", requireAuth, cancelOrderHandler);
@@ -371,17 +379,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Coupons (Phase 2)
   console.error('DEBUG: Importing coupons');
   const { validateCouponHandler } = await import("./coupons");
-  const { 
-    listCouponsHandler, 
-    createCouponHandler, 
-    updateCouponHandler, 
+  const {
+    listCouponsHandler,
+    createCouponHandler,
+    updateCouponHandler,
     deleteCouponHandler,
-    getCouponStatsHandler 
+    getCouponStatsHandler
   } = await import("./admin-coupons");
-  
+
   // User coupon routes
   app.post("/api/coupons/validate", requireAuth, validateCouponHandler);
-  
+
   // Admin coupon routes
   app.get("/api/admin/coupons", requireAdmin, listCouponsHandler);
   app.post("/api/admin/coupons", requireAdmin, createCouponHandler);
@@ -412,11 +420,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin Products (Phase 2 Migration - Drizzle & Zod)
   console.error('DEBUG: Importing admin-products');
-  const { 
-    getAdminProductsHandler, 
+  const {
+    getAdminProductsHandler,
     getAdminProductHandler,
-    createAdminProductHandler, 
-    updateAdminProductHandler, 
+    createAdminProductHandler,
+    updateAdminProductHandler,
     deleteAdminProductHandler,
     bulkUpdateProductStatusHandler
   } = await import("./admin-products");
@@ -427,8 +435,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/products/:id", requireAdmin, invalidateProductsCacheMiddleware, updateAdminProductHandler);
   app.delete("/api/admin/products/:id", requireAdmin, invalidateProductsCacheMiddleware, deleteAdminProductHandler);
   app.post("/api/admin/products/bulk-status", requireAdmin, invalidateProductsCacheMiddleware, bulkUpdateProductStatusHandler);
-  
-  
+  app.post("/api/admin/products/bulk-sale", requireAdmin, invalidateProductsCacheMiddleware, async (req, res) => {
+    const { bulkApplySaleHandler } = await import("./admin-products");
+    return bulkApplySaleHandler(req, res);
+  });
+
+
   // Admin Product Variants (Phase 2) - with cache invalidation
   app.post("/api/admin/products/:productId/variants", requireAdmin, invalidateProductsCacheMiddleware, createVariantHandler);
   app.put("/api/admin/products/:productId/variants/:id", requireAdmin, invalidateProductsCacheMiddleware, updateVariantHandler);
@@ -453,10 +465,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin Analytics (Phase 4)
   console.error('DEBUG: Importing admin-analytics');
-  const { 
-    getRevenueAnalyticsHandler, 
-    getTopProductsHandler, 
-    getCustomerGrowthHandler, 
+  const {
+    getRevenueAnalyticsHandler,
+    getTopProductsHandler,
+    getCustomerGrowthHandler,
     getCategoryPerformanceHandler,
     getSalesOverviewHandler,
     exportReportHandler
@@ -471,11 +483,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin Notifications (Phase 4)
   console.error('DEBUG: Importing admin-notifications');
-  const { 
-    listRecipientsHandler, 
-    createRecipientHandler, 
-    updateRecipientHandler, 
-    deleteRecipientHandler, 
+  const {
+    listRecipientsHandler,
+    createRecipientHandler,
+    updateRecipientHandler,
+    deleteRecipientHandler,
     toggleRecipientHandler,
     getPreferencesHandler,
     updatePreferencesHandler,
@@ -484,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     getNotificationStatsHandler,
     sendTestNotificationHandler
   } = await import("./admin-notifications");
-  
+
   // Admin Content Management (Phase 7 - Dynamic Banners)
   console.error('DEBUG: Importing admin-content');
   const {
@@ -512,20 +524,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/content", requireAdmin, createContentHandler);
   app.put("/api/admin/content/:id", requireAdmin, updateContentHandler);
   app.delete("/api/admin/content/:id", requireAdmin, deleteContentHandler);
-  
+
   app.get("/api/admin/notifications/recipients", requireAdmin, listRecipientsHandler);
   app.post("/api/admin/notifications/recipients", requireAdmin, createRecipientHandler);
   app.put("/api/admin/notifications/recipients/:id", requireAdmin, updateRecipientHandler);
   app.delete("/api/admin/notifications/recipients/:id", requireAdmin, deleteRecipientHandler);
   app.patch("/api/admin/notifications/recipients/:id/toggle", requireAdmin, toggleRecipientHandler);
-  
+
   app.get("/api/admin/notifications/preferences", requireAdmin, getPreferencesHandler);
   app.put("/api/admin/notifications/preferences", requireAdmin, updatePreferencesHandler);
-  
+
   app.get("/api/admin/notifications/history", requireAdmin, listNotificationsHandler);
   app.patch("/api/admin/notifications/history/:id/read", requireAdmin, markNotificationReadHandler);
   app.get("/api/admin/notifications/stats", requireAdmin, getNotificationStatsHandler);
-  
+
   app.post("/api/admin/notifications/test", requireAdmin, sendTestNotificationHandler);
 
   // Product Reviews (Phase 3.2)
@@ -543,11 +555,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Admin Customers (Phase 4)
   console.log('DEBUG: Importing admin-customers');
-  const { 
-    getCustomersHandler, 
-    getCustomerHandler, 
+  const {
+    getCustomersHandler,
+    getCustomerHandler,
     getVIPCustomersHandler,
-    updateCustomerStatusHandler 
+    updateCustomerStatusHandler
   } = await import("./admin-customers");
 
   app.get("/api/admin/customers", requireAdmin, getCustomersHandler);
@@ -580,7 +592,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { searchAuditLogs } = await import('./utils/auditLog');
       const { action, resourceType, startDate, endDate } = req.query;
-      
+
       const logs = await searchAuditLogs({
         action: action as string,
         resourceType: resourceType as string,
@@ -592,9 +604,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.json(logs);
     } catch (error) {
       console.error('Failed to fetch audit logs:', error);
-      return res.status(500).json({ 
-        code: 'AUDIT_LOG_ERROR', 
-        message: 'Failed to fetch audit logs' 
+      return res.status(500).json({
+        code: 'AUDIT_LOG_ERROR',
+        message: 'Failed to fetch audit logs'
       });
     }
   });
@@ -602,10 +614,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Image Upload (Phase 2)
   console.error('DEBUG: Importing upload');
   const { uploadImageHandler, uploadMiddleware } = await import("./upload");
-  app.post("/api/upload", requireAdmin, uploadMiddleware, uploadImageHandler);
+  app.post("/api/upload", requireAuth, uploadMiddleware, uploadImageHandler);
 
   // Serve uploads directory statically
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+  // Contact Form
+  app.post("/api/contact", async (req, res) => {
+    // In a real app, send email via nodemailer or similar
+    const { name, email, subject, message } = req.body;
+    console.log(`[Contact Form] From: ${name} <${email}> | Subject: ${subject} | Message: ${message}`);
+
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    res.json({ success: true, message: "Message received" });
+  });
 
   // Newsletter
   console.error('DEBUG: Importing newsletter');

@@ -1,0 +1,16 @@
+
+import axios from 'axios';
+
+async function testBulkSale() {
+  const API_URL = 'http://localhost:5000/api';
+  
+  // Login as admin first (simulated or using known creds if available, otherwise we might need to bypass auth or use a token)
+  // For this test script to work in this environment where I command the server, I might need to skip auth or mock it.
+  // Actually, I can use the internal function directly if I import it, but that requires ts-node environment.
+  // Let's assume the server is running. I don't have the server running in this environment usually? 
+  // Wait, "The USER's OS version is windows." -> I am on their machine. I can run the server.
+
+  console.log("This is a manual verification plan.");
+  console.log("1. We would curl the endpoint /api/admin/products/bulk-sale");
+  console.log("2. Payload: { targetType: 'category', categoryId: '...', discountParam: { type: 'percent', value: 20 }, action: 'apply' }");
+}
