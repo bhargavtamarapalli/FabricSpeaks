@@ -30,12 +30,13 @@ export interface CartWithItems {
 export interface CartItemWithProduct extends CartItem {
   product_name?: string;
   product_images?: string[];
+  stock_quantity?: number;
 }
 
 export interface CartsRepository {
   getOrCreate(userId: string): Promise<CartWithItems>;
   getOrCreateBySession(sessionId: string): Promise<CartWithItems>;
-  addItem(cartId: string, productId: string, unitPrice: number, quantity: number, size?: string, variantId?: string): Promise<CartWithItems>;
+  addItem(cartId: string, productId: string, unitPrice: number, quantity: number, size?: string, variantId?: string, colour?: string): Promise<CartWithItems>;
   updateItemQuantity(cartItemId: string, quantity: number): Promise<CartWithItems>;
   removeItem(cartItemId: string): Promise<CartWithItems>;
   getByUser(userId: string): Promise<CartWithItems | undefined>;
@@ -45,24 +46,24 @@ export interface CartsRepository {
 }
 
 export class SupabaseCartsRepository implements CartsRepository {
-  
+
   /**
    * Get or create a cart for an authenticated user
    */
   async getOrCreate(userId: string): Promise<CartWithItems> {
     if (!userId) throw new CartError('SESSION_REQUIRED');
-    
+
     try {
       let cart = await db.select().from(carts).where(eq(carts.user_id, userId)).limit(1);
       let cartId: string;
-      
+
       if (cart.length === 0) {
         const newCart = await db.insert(carts).values({ user_id: userId }).returning();
         cartId = newCart[0].id;
       } else {
         cartId = cart[0].id;
       }
-      
+
       return this.computeCart(cartId);
     } catch (err) {
       console.error('[CartsRepo] getOrCreate error:', err);
@@ -75,18 +76,18 @@ export class SupabaseCartsRepository implements CartsRepository {
    */
   async getOrCreateBySession(sessionId: string): Promise<CartWithItems> {
     if (!sessionId) throw new CartError('SESSION_REQUIRED');
-    
+
     try {
       let cart = await db.select().from(carts).where(eq(carts.session_id, sessionId)).limit(1);
       let cartId: string;
-      
+
       if (cart.length === 0) {
         // Calculate expiration date
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + CartConfig.GUEST_CART_EXPIRY_DAYS);
-        
-        const newCart = await db.insert(carts).values({ 
-          session_id: sessionId, 
+
+        const newCart = await db.insert(carts).values({
+          session_id: sessionId,
           user_id: null,
           // expires_at: expiresAt  // Uncomment after migration
         }).returning();
@@ -94,7 +95,7 @@ export class SupabaseCartsRepository implements CartsRepository {
       } else {
         cartId = cart[0].id;
       }
-      
+
       return this.computeCart(cartId);
     } catch (err) {
       console.error('[CartsRepo] getOrCreateBySession error:', err);
@@ -107,12 +108,13 @@ export class SupabaseCartsRepository implements CartsRepository {
    * Uses database-level atomicity for concurrent safety
    */
   async addItem(
-    cartId: string, 
-    productId: string, 
-    unitPrice: number, 
-    quantity: number, 
-    size?: string, 
-    variantId?: string
+    cartId: string,
+    productId: string,
+    unitPrice: number,
+    quantity: number,
+    size?: string,
+    variantId?: string,
+    colour?: string
   ): Promise<CartWithItems> {
     if (!cartId || !productId || unitPrice <= 0 || quantity <= 0) {
       throw new CartError('INVALID_QUANTITY');
@@ -128,26 +130,26 @@ export class SupabaseCartsRepository implements CartsRepository {
         eq(cartItems.cart_id, cartId),
         eq(cartItems.product_id, productId)
       ];
-      
+
       if (variantId) {
         conditions.push(eq(cartItems.variant_id, variantId));
       } else if (size) {
         conditions.push(eq(cartItems.size, size));
       }
-      
+
       const whereClause = and(...conditions);
       const existingItem = await db.select()
         .from(cartItems)
         .where(whereClause)
         .limit(1);
-        
+
       if (existingItem.length > 0) {
         const newQuantity = existingItem[0].quantity + quantity;
-        
+
         if (newQuantity > CartConfig.MAX_QUANTITY_PER_ITEM) {
           throw new CartError('MAX_QUANTITY_EXCEEDED');
         }
-        
+
         // Update existing item quantity
         await db.update(cartItems)
           .set({ quantity: newQuantity })
@@ -157,11 +159,11 @@ export class SupabaseCartsRepository implements CartsRepository {
         const itemCount = await db.select({ count: sql<number>`count(*)` })
           .from(cartItems)
           .where(eq(cartItems.cart_id, cartId));
-        
+
         if ((itemCount[0]?.count || 0) >= CartConfig.MAX_ITEMS_PER_CART) {
           throw new CartError('MAX_ITEMS_EXCEEDED');
         }
-        
+
         // Insert new item
         await db.insert(cartItems).values({
           cart_id: cartId,
@@ -169,10 +171,11 @@ export class SupabaseCartsRepository implements CartsRepository {
           variant_id: variantId || null,
           quantity,
           size: size || null,
+          colour: colour || null,
           unit_price: unitPrice.toString()
         });
       }
-      
+
       return this.computeCart(cartId);
     } catch (err) {
       if (err instanceof CartError) throw err;
@@ -186,7 +189,7 @@ export class SupabaseCartsRepository implements CartsRepository {
    */
   async getCartItem(cartItemId: string): Promise<CartItem | null> {
     if (!cartItemId) return null;
-    
+
     try {
       const items = await db.select().from(cartItems).where(eq(cartItems.id, cartItemId)).limit(1);
       return items.length > 0 ? items[0] : null;
@@ -201,18 +204,18 @@ export class SupabaseCartsRepository implements CartsRepository {
    */
   async updateItemQuantity(cartItemId: string, quantity: number): Promise<CartWithItems> {
     if (!cartItemId) throw new CartError('CART_ITEM_NOT_FOUND');
-    
+
     if (quantity < CartConfig.MIN_QUANTITY_PER_ITEM) {
       throw new CartError('INVALID_QUANTITY');
     }
-    
+
     if (quantity > CartConfig.MAX_QUANTITY_PER_ITEM) {
       throw new CartError('MAX_QUANTITY_EXCEEDED');
     }
-    
+
     try {
       const item = await db.select().from(cartItems).where(eq(cartItems.id, cartItemId)).limit(1);
-      
+
       if (item.length === 0) {
         throw new CartError('CART_ITEM_NOT_FOUND');
       }
@@ -224,9 +227,9 @@ export class SupabaseCartsRepository implements CartsRepository {
           throw new CartError('INSUFFICIENT_STOCK', { available: stockCheck.available });
         }
       }
-      
+
       await db.update(cartItems).set({ quantity }).where(eq(cartItems.id, cartItemId));
-      
+
       return this.computeCart(item[0].cart_id);
     } catch (err) {
       if (err instanceof CartError) throw err;
@@ -240,17 +243,17 @@ export class SupabaseCartsRepository implements CartsRepository {
    */
   async removeItem(cartItemId: string): Promise<CartWithItems> {
     if (!cartItemId) throw new CartError('CART_ITEM_NOT_FOUND');
-    
+
     try {
       const item = await db.select().from(cartItems).where(eq(cartItems.id, cartItemId)).limit(1);
-      
+
       if (item.length === 0) {
         throw new CartError('CART_ITEM_NOT_FOUND');
       }
-      
+
       const cartId = item[0].cart_id;
       await db.delete(cartItems).where(eq(cartItems.id, cartItemId));
-      
+
       return this.computeCart(cartId);
     } catch (err) {
       if (err instanceof CartError) throw err;
@@ -264,7 +267,7 @@ export class SupabaseCartsRepository implements CartsRepository {
    */
   async getByUser(userId: string): Promise<CartWithItems | undefined> {
     if (!userId) return undefined;
-    
+
     try {
       const cart = await db.select().from(carts).where(eq(carts.user_id, userId)).limit(1);
       if (cart.length === 0) return undefined;
@@ -280,7 +283,7 @@ export class SupabaseCartsRepository implements CartsRepository {
    */
   async getBySession(sessionId: string): Promise<CartWithItems | undefined> {
     if (!sessionId) return undefined;
-    
+
     try {
       const cart = await db.select().from(carts).where(eq(carts.session_id, sessionId)).limit(1);
       if (cart.length === 0) return undefined;
@@ -296,10 +299,10 @@ export class SupabaseCartsRepository implements CartsRepository {
    */
   async mergeGuestCart(userId: string, sessionId: string): Promise<CartWithItems> {
     if (!userId || !sessionId) throw new CartError('SESSION_REQUIRED');
-    
+
     try {
       const guestCart = await this.getBySession(sessionId);
-      
+
       if (!guestCart || guestCart.items.length === 0) {
         return this.getOrCreate(userId);
       }
@@ -334,8 +337,8 @@ export class SupabaseCartsRepository implements CartsRepository {
    * Validate stock availability for a product/variant
    */
   private async validateStock(
-    productId: string, 
-    variantId: string | null, 
+    productId: string,
+    variantId: string | null,
     requestedQuantity: number
   ): Promise<{ valid: boolean; available: number }> {
     try {
@@ -344,7 +347,7 @@ export class SupabaseCartsRepository implements CartsRepository {
           .from(productVariants)
           .where(eq(productVariants.id, variantId))
           .limit(1);
-        
+
         const available = variant[0]?.stock || 0;
         return { valid: requestedQuantity <= available, available };
       } else {
@@ -352,7 +355,7 @@ export class SupabaseCartsRepository implements CartsRepository {
           .from(products)
           .where(eq(products.id, productId))
           .limit(1);
-        
+
         const available = product[0]?.stock || 0;
         return { valid: requestedQuantity <= available, available };
       }
@@ -366,14 +369,14 @@ export class SupabaseCartsRepository implements CartsRepository {
    */
   private async computeCart(cartId: string): Promise<CartWithItems> {
     if (!cartId) throw new CartError('CART_NOT_FOUND');
-    
+
     try {
       const cart = await db.select().from(carts).where(eq(carts.id, cartId)).limit(1);
-      
+
       if (cart.length === 0) {
         throw new CartError('CART_NOT_FOUND');
       }
-      
+
       // Fetch items with product details
       const items = await db.select({
         id: cartItems.id,
@@ -382,48 +385,60 @@ export class SupabaseCartsRepository implements CartsRepository {
         variant_id: cartItems.variant_id,
         quantity: cartItems.quantity,
         size: cartItems.size,
+        colour: cartItems.colour,
         unit_price: cartItems.unit_price,
         product_name: products.name,
         product_main_image: products.main_image,
         product_color_images: products.color_images,
         product_signature_details: products.signature_details,
+        product_stock_quantity: products.stock_quantity,
       })
-      .from(cartItems)
-      .leftJoin(products, eq(cartItems.product_id, products.id))
-      .where(eq(cartItems.cart_id, cartId));
-      
+        .from(cartItems)
+        .leftJoin(products, eq(cartItems.product_id, products.id))
+        .where(eq(cartItems.cart_id, cartId));
+
       // Calculate subtotal
       const subtotal = items.reduce((sum, item) => {
         const price = parseFloat(item.unit_price?.toString() || '0');
         return sum + (price * item.quantity);
       }, 0);
-      
+
       return {
         ...cart[0],
         items: items.map(item => {
-          // Extract images similar to products repository transformProductImages
+          // Extract images - prioritize selected colour's images
           const images: string[] = [];
-          
-          // 1. Check main_image first
-          if (item.product_main_image) {
+          const selectedColour = item.colour;
+
+          // 1. If we have a selected colour and color_images, use that colour's images first
+          if (selectedColour && item.product_color_images && typeof item.product_color_images === 'object') {
+            const colorImagesObj = item.product_color_images as Record<string, string[]>;
+            // Try exact match first
+            const colourKey = Object.keys(colorImagesObj).find(
+              k => k.toLowerCase() === selectedColour.toLowerCase()
+            );
+            if (colourKey && Array.isArray(colorImagesObj[colourKey])) {
+              images.push(...colorImagesObj[colourKey]);
+            }
+          }
+
+          // 2. If no colour-specific images, fall back to main_image
+          if (images.length === 0 && item.product_main_image) {
             images.push(item.product_main_image);
           }
-          
-          // 2. Check color_images (e.g. { "Black": [url1, url2], "White": [url3] })
-          if (item.product_color_images && typeof item.product_color_images === 'object') {
+
+          // 3. If still no images, try any color_images
+          if (images.length === 0 && item.product_color_images && typeof item.product_color_images === 'object') {
             const colorImagesObj = item.product_color_images as Record<string, string[]>;
             for (const colorUrls of Object.values(colorImagesObj)) {
-              if (Array.isArray(colorUrls)) {
-                for (const url of colorUrls) {
-                  if (!images.includes(url)) {
-                    images.push(url);
-                  }
-                }
+              if (Array.isArray(colorUrls) && colorUrls.length > 0) {
+                images.push(colorUrls[0]); // Just take first image from any color
+                break;
               }
             }
           }
-          
-          // 3. Fallback to signature_details.image
+
+          // 4. Fallback to signature_details.image
           if (images.length === 0 && item.product_signature_details) {
             const sigDetails = item.product_signature_details as any;
             if (sigDetails?.image) {
@@ -432,7 +447,7 @@ export class SupabaseCartsRepository implements CartsRepository {
               images.push(...sigDetails.images);
             }
           }
-          
+
           return {
             id: item.id,
             cart_id: item.cart_id,
@@ -440,9 +455,11 @@ export class SupabaseCartsRepository implements CartsRepository {
             variant_id: item.variant_id,
             quantity: item.quantity,
             size: item.size,
+            colour: item.colour,
             unit_price: item.unit_price,
             product_name: item.product_name || 'Unknown Product',
-            product_images: images
+            product_images: images,
+            stock_quantity: item.product_stock_quantity
           };
         }) as CartItemWithProduct[],
         subtotal

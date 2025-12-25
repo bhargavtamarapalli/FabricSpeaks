@@ -35,9 +35,11 @@ export interface OrderTimelineProps {
 
 export function OrderTimeline({ events, className }: OrderTimelineProps) {
     // Sort events by date (newest first)
-    const sortedEvents = [...events].sort((a, b) =>
-        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
+    const sortedEvents = [...events].sort((a, b) => {
+        const dateA = a.timestamp || (a as any).createdAt || 0;
+        const dateB = b.timestamp || (b as any).createdAt || 0;
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+    });
 
     const getEventIcon = (status: string) => {
         switch (status) {
@@ -61,25 +63,25 @@ export function OrderTimeline({ events, className }: OrderTimelineProps) {
     const getEventColor = (status: string) => {
         switch (status) {
             case 'pending':
-                return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
+                return 'text-yellow-600 dark:text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
             case 'processing':
-                return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+                return 'text-blue-600 dark:text-blue-400 bg-blue-400/10 border-blue-400/20';
             case 'shipped':
-                return 'text-purple-400 bg-purple-400/10 border-purple-400/20';
+                return 'text-purple-600 dark:text-purple-400 bg-purple-400/10 border-purple-400/20';
             case 'delivered':
-                return 'text-green-400 bg-green-400/10 border-green-400/20';
+                return 'text-green-600 dark:text-green-400 bg-green-400/10 border-green-400/20';
             case 'cancelled':
-                return 'text-red-400 bg-red-400/10 border-red-400/20';
+                return 'text-red-600 dark:text-red-400 bg-red-400/10 border-red-400/20';
             case 'refunded':
-                return 'text-orange-400 bg-orange-400/10 border-orange-400/20';
+                return 'text-orange-600 dark:text-orange-400 bg-orange-400/10 border-orange-400/20';
             default:
-                return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
+                return 'text-muted-foreground bg-muted border-border';
         }
     };
 
     return (
         <div className={cn('space-y-8', className)}>
-            <div className="relative pl-6 border-l border-slate-800">
+            <div className="relative pl-6 border-l border-border">
                 {sortedEvents.map((event, index) => {
                     const Icon = getEventIcon(event.status);
                     const colorClass = getEventColor(event.status);
@@ -97,22 +99,22 @@ export function OrderTimeline({ events, className }: OrderTimelineProps) {
                             {/* Content */}
                             <div className="flex flex-col gap-1">
                                 <div className="flex items-center justify-between gap-4">
-                                    <p className="text-sm font-medium text-white">
-                                        {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                                    <p className="text-sm font-medium text-foreground capitalize">
+                                        {event.status || 'Unknown'}
                                     </p>
-                                    <span className="text-xs text-slate-500 whitespace-nowrap">
+                                    <span className="text-xs text-muted-foreground whitespace-nowrap">
                                         {formatDate(event.timestamp, 'medium')}
                                     </span>
                                 </div>
 
                                 {event.note && (
-                                    <p className="text-sm text-slate-400">
+                                    <p className="text-sm text-muted-foreground">
                                         {event.note}
                                     </p>
                                 )}
 
                                 {event.performedBy && (
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-muted-foreground">
                                         by {event.performedBy}
                                     </p>
                                 )}

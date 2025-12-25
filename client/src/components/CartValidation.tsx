@@ -24,7 +24,10 @@ export const CartValidationBanner: React.FC<CartValidationBannerProps> = ({
 }) => {
   const [dismissed, setDismissed] = React.useState(false);
 
-  if (dismissed || (isValid && warnings.length === 0)) {
+  // Filter out low_stock warnings - these are shown per-item now
+  const criticalWarnings = warnings.filter(w => w.type !== 'low_stock');
+
+  if (dismissed || (isValid && criticalWarnings.length === 0 && errors.length === 0)) {
     return null;
   }
 
@@ -35,15 +38,15 @@ export const CartValidationBanner: React.FC<CartValidationBannerProps> = ({
 
   const errorCount = errors.length;
   const hasErrors = errorCount > 0;
-  const hasWarnings = warnings.length > 0;
+  const hasWarnings = criticalWarnings.length > 0;
 
   return (
     <div
       className={`rounded-lg border p-4 mb-4 ${hasErrors
-          ? "border-red-200 bg-red-50"
-          : hasWarnings
-            ? "border-yellow-200 bg-yellow-50"
-            : "border-green-200 bg-green-50"
+        ? "border-red-200 bg-red-50"
+        : hasWarnings
+          ? "border-yellow-200 bg-yellow-50"
+          : "border-green-200 bg-green-50"
         }`}
       role="alert"
     >
@@ -63,10 +66,10 @@ export const CartValidationBanner: React.FC<CartValidationBannerProps> = ({
         <div className="flex-1 min-w-0">
           <h3
             className={`font-semibold ${hasErrors
-                ? "text-red-900"
-                : hasWarnings
-                  ? "text-yellow-900"
-                  : "text-green-900"
+              ? "text-red-900"
+              : hasWarnings
+                ? "text-yellow-900"
+                : "text-green-900"
               }`}
           >
             {isLoading
@@ -101,10 +104,10 @@ export const CartValidationBanner: React.FC<CartValidationBannerProps> = ({
             </ul>
           )}
 
-          {/* Warning Messages */}
+          {/* Warning Messages - Only critical warnings */}
           {hasWarnings && (
             <ul className="mt-2 space-y-2">
-              {warnings.map((warning, idx) => (
+              {criticalWarnings.map((warning, idx) => (
                 <li key={idx} className="text-sm text-yellow-800">
                   <div className="flex items-start gap-2">
                     <span className="font-medium">•</span>
@@ -249,10 +252,10 @@ export const CartItemStockStatus: React.FC<CartItemStockStatusProps> = ({
       )}
 
       {isLowStock && !isValidating && (
-        <div className="flex items-center gap-1 px-2 py-1 rounded bg-yellow-50 border border-yellow-200">
-          <AlertTriangle className="h-4 w-4 text-yellow-600" />
-          <span className="text-xs text-yellow-700">
-            {availableQuantity} in stock
+        <div className="flex items-center gap-1 px-2 py-1 rounded bg-amber-50 border border-amber-200">
+          <span className="text-amber-600">🔥</span>
+          <span className="text-xs font-medium text-amber-700">
+            Hurry! Only {availableQuantity} left
           </span>
         </div>
       )}
@@ -296,14 +299,14 @@ export const StockStatusBadge: React.FC<StockStatusBadgeProps> = ({
       border: "border-green-200",
       text: "text-green-700",
       icon: <CheckCircle className="h-4 w-4" />,
-      label: quantity ? `${quantity} in stock` : "In Stock",
+      label: "In Stock",
     },
     low_stock: {
-      bg: "bg-yellow-50",
-      border: "border-yellow-200",
-      text: "text-yellow-700",
-      icon: <AlertTriangle className="h-4 w-4" />,
-      label: quantity ? `${quantity} left` : "Low Stock",
+      bg: "bg-amber-50",
+      border: "border-amber-200",
+      text: "text-amber-700",
+      icon: <span>🔥</span>,
+      label: quantity ? `Hurry! Only ${quantity} left` : "Limited Stock",
     },
     out_of_stock: {
       bg: "bg-red-50",

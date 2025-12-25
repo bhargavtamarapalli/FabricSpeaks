@@ -1,27 +1,17 @@
 
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { CheckCircle, ArrowRight, ShoppingBag } from "lucide-react";
+import { CheckCircle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { useOrders } from "@/hooks/useOrders";
 import { motion } from "framer-motion";
-import ShoppingCart from "@/components/ShoppingCart";
-import AuthModal from "@/components/AuthModal";
-import { useCart } from "@/hooks/useCart";
-import { useAuth } from "@/hooks/useAuth";
+import PageLayout from "@/components/PageLayout";
 
 export default function CheckoutSuccess() {
     const [, setLocation] = useLocation();
-    const { data: orders, isLoading } = useOrders();
+    const { data: orders } = useOrders();
     const [lastOrder, setLastOrder] = useState<any>(null);
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isAuthOpen, setIsAuthOpen] = useState(false);
-    const cartQuery = useCart();
-    const cartItems = cartQuery.data?.items || [];
-    const { login, register } = useAuth();
 
     // Find the most recent order
     useEffect(() => {
@@ -47,13 +37,7 @@ export default function CheckoutSuccess() {
     });
 
     return (
-        <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
-            <Header
-                cartItemCount={cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                onCartClick={() => setIsCartOpen(true)}
-                onAuthClick={() => setIsAuthOpen(true)}
-            />
-
+        <PageLayout className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
             <main className="flex-1 flex flex-col items-center justify-center py-24 px-6">
                 <div className="max-w-4xl w-full text-center">
                     <motion.div
@@ -134,37 +118,6 @@ export default function CheckoutSuccess() {
                     )}
                 </div>
             </main>
-
-            <Footer />
-
-            <ShoppingCart
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                onCheckout={() => setLocation('/checkout')}
-            />
-
-            <AuthModal
-                isOpen={isAuthOpen}
-                onClose={() => setIsAuthOpen(false)}
-                onLogin={async (email, password) => {
-                    try {
-                        await login(email, password);
-                        setIsAuthOpen(false);
-                    } catch (e) {
-                        console.error("Login failed:", e);
-                        alert("Login failed. Please check your credentials.");
-                    }
-                }}
-                onRegister={async (email, password, name) => {
-                    try {
-                        await register(email, password);
-                        setIsAuthOpen(false);
-                    } catch (e) {
-                        console.error("Registration failed:", e);
-                        alert("Registration failed. Please try again.");
-                    }
-                }}
-            />
-        </div>
+        </PageLayout>
     );
 }

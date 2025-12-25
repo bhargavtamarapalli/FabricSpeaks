@@ -4,10 +4,11 @@
  */
 
 import { db } from "../db/supabase";
-import { 
-  adminNotifications, 
-  notificationRecipients, 
-  notificationPreferences 
+
+import {
+  adminNotifications,
+  notificationRecipients,
+  notificationPreferences
 } from "../../shared/schema";
 import { eq, and } from "drizzle-orm";
 
@@ -41,7 +42,7 @@ export interface WhatsAppConfig {
 
 class WhatsAppNotificationService {
   private config: WhatsAppConfig;
-  
+
   constructor() {
     this.config = {
       apiUrl: process.env.WHATSAPP_API_URL || 'https://graph.facebook.com/v18.0',
@@ -57,7 +58,7 @@ class WhatsAppNotificationService {
     try {
       // Get active recipients
       const recipients = await this.getEligibleRecipients(notification);
-      
+
       if (recipients.length === 0) {
         console.log(`No eligible recipients for ${notification.type} notification`);
         return;
@@ -108,7 +109,7 @@ class WhatsAppNotificationService {
       const priorityLevels = { info: 0, important: 1, critical: 2 };
       const recipientThreshold = priorityLevels[recipient.priority_threshold as keyof typeof priorityLevels];
       const notificationPriority = priorityLevels[notification.priority];
-      
+
       if (notificationPriority < recipientThreshold) return false;
 
       // Check quiet hours
@@ -131,10 +132,10 @@ class WhatsAppNotificationService {
 
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
-    
+
     const [startHour, startMin] = start.split(':').map(Number);
     const [endHour, endMin] = end.split(':').map(Number);
-    
+
     const startTime = startHour * 60 + startMin;
     const endTime = endHour * 60 + endMin;
 
@@ -152,7 +153,7 @@ class WhatsAppNotificationService {
   private shouldBatch(priority: Priority): boolean {
     // Critical notifications are never batched
     if (priority === Priority.CRITICAL) return false;
-    
+
     // Important and Info can be batched based on preferences
     return true;
   }
@@ -166,7 +167,7 @@ class WhatsAppNotificationService {
   ): Promise<void> {
     // Implementation for batching logic
     console.log(`Added ${notification.type} notification to batch queue`);
-    
+
     // Store in database for later processing
     for (const recipient of recipients) {
       await db.insert(adminNotifications).values({
@@ -218,7 +219,7 @@ class WhatsAppNotificationService {
         console.log(`Sent ${notification.type} notification to ${recipient.name}`);
       } catch (error) {
         console.error(`Failed to send to ${recipient.name}:`, error);
-        
+
         // Log failure
         await db.insert(adminNotifications).values({
           notification_type: notification.type,
@@ -300,7 +301,7 @@ Fabric Speaks Admin Alert
 
     // Production: Send via WhatsApp Business API
     const url = `${this.config.apiUrl}/${this.config.phoneNumberId}/messages`;
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {

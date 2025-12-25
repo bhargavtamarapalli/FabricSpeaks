@@ -26,9 +26,9 @@ export default function BottomNav({ onCartClick }: BottomNavProps) {
                     const isActive = location === item.href;
                     return (
                         <Link key={item.href} href={item.href}>
-                            <a
+                            <span
                                 className={cn(
-                                    "flex flex-col items-center justify-center w-full h-full space-y-1",
+                                    "flex flex-col items-center justify-center w-full h-full space-y-1 cursor-pointer",
                                     isActive
                                         ? "text-primary"
                                         : "text-muted-foreground hover:text-primary transition-colors"
@@ -44,7 +44,7 @@ export default function BottomNav({ onCartClick }: BottomNavProps) {
                                 <span className="text-[10px] font-medium tracking-wide">
                                     {item.label}
                                 </span>
-                            </a>
+                            </span>
                         </Link>
                     );
                 })}

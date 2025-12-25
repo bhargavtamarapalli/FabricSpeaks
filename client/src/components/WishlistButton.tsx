@@ -42,8 +42,8 @@ export function WishlistButton({
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
 
-    // Get default wishlist
-    const { data: defaultWishlist, isLoading: wishlistLoading } = useDefaultWishlist();
+    // Get default wishlist (only if user is logged in)
+    const { data: defaultWishlist, isLoading: wishlistLoading } = useDefaultWishlist({ enabled: !!user });
 
     // Check if item is in wishlist
     const isInWishlist = useIsInWishlist(productId, variantId);
@@ -118,8 +118,8 @@ export function WishlistButton({
         >
             <Heart
                 className={`h-5 w-5 transition-all duration-200 ${isInWishlist
-                        ? "fill-red-500 text-red-500"
-                        : "text-muted-foreground hover:text-red-500"
+                    ? "fill-red-500 text-red-500"
+                    : "text-muted-foreground hover:text-red-500"
                     } ${isLoading ? "animate-pulse" : ""}`}
             />
             {showLabel && (

@@ -95,7 +95,7 @@ export function NotificationList({
             case 'inventory':
                 return 'text-yellow-400 bg-yellow-400/10';
             default:
-                return 'text-slate-400 bg-slate-400/10';
+                return 'text-muted-foreground bg-muted';
         }
     };
 
@@ -103,11 +103,11 @@ export function NotificationList({
         return (
             <div className="space-y-4 p-4">
                 {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex gap-4 rounded-lg border border-slate-800/50 bg-slate-900/50 p-4 animate-pulse">
-                        <div className="h-10 w-10 rounded-full bg-slate-800" />
+                    <div key={i} className="flex gap-4 rounded-lg border border-border bg-card p-4 animate-pulse">
+                        <div className="h-10 w-10 rounded-full bg-muted" />
                         <div className="flex-1 space-y-2">
-                            <div className="h-4 w-3/4 rounded bg-slate-800" />
-                            <div className="h-3 w-1/2 rounded bg-slate-800" />
+                            <div className="h-4 w-3/4 rounded bg-muted" />
+                            <div className="h-3 w-1/2 rounded bg-muted" />
                         </div>
                     </div>
                 ))}
@@ -118,11 +118,11 @@ export function NotificationList({
     if (notifications.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-800/50 text-slate-500 mb-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
                     <Bell className="h-6 w-6" />
                 </div>
-                <h3 className="text-lg font-medium text-white">No notifications</h3>
-                <p className="text-sm text-slate-400">You're all caught up!</p>
+                <h3 className="text-lg font-bold text-foreground">No notifications</h3>
+                <p className="text-sm text-muted-foreground">You're all caught up!</p>
             </div>
         );
     }
@@ -130,12 +130,12 @@ export function NotificationList({
     return (
         <div className={cn('flex flex-col h-full', className)}>
             {/* Filters */}
-            <div className="flex items-center gap-2 p-4 border-b border-slate-800/50">
+            <div className="flex items-center gap-2 p-4 border-b border-border">
                 <Button
                     variant={filter === 'all' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setFilter('all')}
-                    className={filter === 'all' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'}
+                    className={filter === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}
                 >
                     All
                 </Button>
@@ -143,7 +143,7 @@ export function NotificationList({
                     variant={filter === 'unread' ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => setFilter('unread')}
-                    className={filter === 'unread' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-white'}
+                    className={filter === 'unread' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}
                 >
                     Unread
                 </Button>
@@ -160,10 +160,10 @@ export function NotificationList({
                             <div
                                 key={notification.id}
                                 className={cn(
-                                    'group relative flex gap-4 rounded-lg border p-4 transition-all hover:bg-slate-800/50',
+                                    'group relative flex gap-4 rounded-lg border p-4 transition-all hover:bg-muted/50',
                                     notification.read
-                                        ? 'border-slate-800/50 bg-transparent opacity-75'
-                                        : 'border-slate-700 bg-slate-900/50'
+                                        ? 'border-border bg-background opacity-75'
+                                        : 'border-border bg-card shadow-sm'
                                 )}
                             >
                                 {/* Icon */}
@@ -174,27 +174,27 @@ export function NotificationList({
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-2">
-                                        <p className={cn('font-medium text-white', notification.read ? 'font-normal' : 'font-semibold')}>
+                                        <p className={cn('font-medium text-foreground', notification.read ? 'font-normal' : 'font-bold')}>
                                             {notification.title}
                                         </p>
-                                        <span className="flex items-center gap-1 text-xs text-slate-500 whitespace-nowrap">
+                                        <span className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap">
                                             <Clock className="h-3 w-3" />
                                             {formatRelativeTime(new Date(notification.createdAt))}
                                         </span>
                                     </div>
-                                    <p className="mt-1 text-sm text-slate-400 line-clamp-2">
+                                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
                                         {notification.message}
                                     </p>
                                 </div>
 
                                 {/* Actions (visible on hover) */}
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100 bg-slate-900/90 p-1 rounded-md shadow-lg">
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100 bg-background/95 backdrop-blur-sm p-1 rounded-md shadow-lg border border-border">
                                     {!notification.read && (
                                         <Button
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => onMarkAsRead(notification.id)}
-                                            className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
+                                            className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
                                             title="Mark as read"
                                         >
                                             <Check className="h-4 w-4" />
@@ -204,7 +204,7 @@ export function NotificationList({
                                         variant="ghost"
                                         size="icon"
                                         onClick={() => onDelete(notification.id)}
-                                        className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                                        className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                                         title="Delete"
                                     >
                                         <Trash2 className="h-4 w-4" />

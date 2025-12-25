@@ -84,39 +84,39 @@ export function SecuritySettings({
         <div className={cn('space-y-8', className)}>
             {/* Change Password */}
             <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-medium text-white">
-                    <Key className="h-5 w-5 text-indigo-400" />
+                <div className="flex items-center gap-2 text-lg font-bold text-foreground">
+                    <Key className="h-5 w-5 text-primary" />
                     <h3>Change Password</h3>
                 </div>
                 <form onSubmit={handleSubmit(handlePasswordSubmit)} className="space-y-4 max-w-md">
                     <div className="space-y-2">
-                        <Label>Current Password</Label>
+                        <Label className="font-bold">Current Password</Label>
                         <Input
                             type="password"
                             {...register('currentPassword')}
-                            className="border-slate-700 bg-slate-800 text-white"
+                            className="border-border bg-background text-foreground"
                         />
                         {errors.currentPassword && (
                             <p className="text-xs text-red-400">{errors.currentPassword.message}</p>
                         )}
                     </div>
                     <div className="space-y-2">
-                        <Label>New Password</Label>
+                        <Label className="font-bold">New Password</Label>
                         <Input
                             type="password"
                             {...register('newPassword')}
-                            className="border-slate-700 bg-slate-800 text-white"
+                            className="border-border bg-background text-foreground"
                         />
                         {errors.newPassword && (
                             <p className="text-xs text-red-400">{errors.newPassword.message}</p>
                         )}
                     </div>
                     <div className="space-y-2">
-                        <Label>Confirm New Password</Label>
+                        <Label className="font-bold">Confirm New Password</Label>
                         <Input
                             type="password"
                             {...register('confirmPassword')}
-                            className="border-slate-700 bg-slate-800 text-white"
+                            className="border-border bg-background text-foreground"
                         />
                         {errors.confirmPassword && (
                             <p className="text-xs text-red-400">{errors.confirmPassword.message}</p>
@@ -125,29 +125,29 @@ export function SecuritySettings({
                     <Button
                         type="submit"
                         disabled={loading}
-                        className="bg-indigo-600 hover:bg-indigo-700"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm"
                     >
                         Update Password
                     </Button>
                 </form>
             </div>
 
-            <Separator className="bg-slate-800" />
+            <Separator className="bg-border" />
 
             {/* Two-Factor Authentication */}
             <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-medium text-white">
-                    <Shield className="h-5 w-5 text-green-400" />
+                <div className="flex items-center gap-2 text-lg font-bold text-foreground">
+                    <Shield className="h-5 w-5 text-primary" />
                     <h3>Two-Factor Authentication</h3>
                 </div>
-                <div className="flex items-center justify-between rounded-lg border border-slate-800 bg-slate-900/50 p-4">
+                <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4">
                     <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800">
-                            <Smartphone className="h-5 w-5 text-slate-400" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background border border-border">
+                            <Smartphone className="h-5 w-5 text-muted-foreground" />
                         </div>
                         <div>
-                            <p className="font-medium text-white">Authenticator App</p>
-                            <p className="text-sm text-slate-400">
+                            <p className="font-bold text-foreground">Authenticator App</p>
+                            <p className="text-sm text-muted-foreground">
                                 Use an app like Google Authenticator to generate verification codes.
                             </p>
                         </div>
@@ -155,36 +155,36 @@ export function SecuritySettings({
                     <Switch
                         checked={twoFactorEnabled}
                         onCheckedChange={handle2FAToggle}
-                        className="data-[state=checked]:bg-indigo-500"
+                        className="data-[state=checked]:bg-primary"
                     />
                 </div>
             </div>
 
-            <Separator className="bg-slate-800" />
+            <Separator className="bg-border" />
 
             {/* Active Sessions */}
             <div className="space-y-4">
-                <div className="flex items-center gap-2 text-lg font-medium text-white">
-                    <LogOut className="h-5 w-5 text-red-400" />
+                <div className="flex items-center gap-2 text-lg font-bold text-foreground">
+                    <LogOut className="h-5 w-5 text-primary" />
                     <h3>Active Sessions</h3>
                 </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900/50">
+                <div className="rounded-lg border border-border bg-muted/30">
                     <div className="flex items-center justify-between p-4">
                         <div>
-                            <p className="font-medium text-white">Windows PC - Chrome</p>
-                            <p className="text-xs text-slate-400">Mumbai, India • Active now</p>
+                            <p className="font-bold text-foreground">Windows PC - Chrome</p>
+                            <p className="text-xs text-muted-foreground">Mumbai, India • Active now</p>
                         </div>
-                        <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
+                        <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:bg-muted hover:text-foreground">
                             Current Session
                         </Button>
                     </div>
-                    <Separator className="bg-slate-800" />
+                    <Separator className="bg-border" />
                     <div className="flex items-center justify-between p-4">
                         <div>
-                            <p className="font-medium text-white">iPhone 13 - Safari</p>
-                            <p className="text-xs text-slate-400">Mumbai, India • 2 hours ago</p>
+                            <p className="font-bold text-foreground">iPhone 13 - Safari</p>
+                            <p className="text-xs text-muted-foreground">Mumbai, India • 2 hours ago</p>
                         </div>
-                        <Button variant="ghost" size="sm" className="text-red-400 hover:bg-red-400/10 hover:text-red-300">
+                        <Button variant="ghost" size="sm" className="text-destructive hover:bg-destructive/10 hover:text-destructive">
                             Revoke
                         </Button>
                     </div>

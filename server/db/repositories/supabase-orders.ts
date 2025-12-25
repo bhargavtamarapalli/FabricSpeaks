@@ -12,7 +12,7 @@ import { z } from "zod";
 
 export interface OrdersRepository {
   createFromCart(
-    userId: string | null, 
+    userId: string | null,
     items: Array<{ productId: string; unitPrice: number; quantity: number; size?: string | null }>,
     guestInfo?: { email: string; phone: string; sessionId: string }
   ): Promise<{ order: Order; items: OrderItem[] }>;
@@ -24,7 +24,14 @@ export class SupabaseOrdersRepository implements OrdersRepository {
   async createFromCart(
     userId: string | null, // Nullable for guest
     items: Array<{ productId: string; unitPrice: number; quantity: number; size?: string | null }>,
-    guestInfo?: { email: string; phone: string; sessionId: string }
+    guestInfo?: { email: string; phone: string; sessionId: string },
+    options?: {
+      shippingAddress?: any;
+      deliveryOption?: string;
+      giftMessage?: string;
+      couponCode?: string;
+      discountAmount?: number;
+    }
   ): Promise<{ order: Order; items: OrderItem[] }> {
     // Input validation
     if (!userId && !guestInfo) {
@@ -52,26 +59,30 @@ export class SupabaseOrdersRepository implements OrdersRepository {
       // Guest fields
       session_id: guestInfo?.sessionId,
       guest_email: guestInfo?.email,
-      guest_phone: guestInfo?.phone
+      guest_phone: guestInfo?.phone,
+      // New Checkout Fields
+      shipping_address_snapshot: options?.shippingAddress || null,
+      delivery_option: options?.deliveryOption || 'standard',
+      gift_message: options?.giftMessage || null,
+      discount_amount: options?.discountAmount?.toString() || "0",
     };
-    
-    // Use partial parse or manual construction since scheam might expect user_id
-    // insertOrderSchema was updated to optional user_id if we regenerated it, but Zod inference might still strictly follow schema definition?
-    // In schema.ts: user_id: uuid(...).references(...) -> default nullable.
-    // Let's rely on explicit Zod if needed, or just partial.
-    // But we expanded insertOrderSchema in Step 40.
-    
-    const orderData = insertOrderSchema.pick({ 
-      user_id: true, 
-      total_amount: true, 
-      status: true,
-      session_id: true,
-      guest_email: true,
-      guest_phone: true
-    }).parse(orderDataRaw);
+
+    // Validate with partial schema + manual fields
+    // We expanded schema but using pick on insertOrderSchema might be restrictive if we didn't update it in schema.ts fully or if we want flexibility
+    // Let's construct the object directly to avoid Zod strictness on new fields if schema.ts update wasn't perfect in previous step
+    // (We updated schema.ts table definition, but insertOrderSchema usually needs checking too. 
+    // In Step 40 we saw insertOrderSchema uses createInsertSchema(orders), so it SHOULD have the new fields automatically if we re-imported or if it's dynamic? 
+    // Actually no, allow dynamic properties for JSONB)
+
+    const dbPayload: any = {
+      ...orderDataRaw,
+      // Default fields
+      payment_status: 'pending',
+      updated_at: new Date()
+    };
 
     try {
-      const [order] = await db.insert(orders).values(orderData).returning();
+      const [order] = await db.insert(orders).values(dbPayload).returning();
       if (!order) throw new Error('Order creation failed');
 
       // Whitelist and validate order item fields

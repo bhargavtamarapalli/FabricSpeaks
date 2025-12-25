@@ -33,6 +33,7 @@ export interface CartItem {
   // Extended fields from server join
   product_name?: string;
   product_images?: string[];
+  stock_quantity?: number;
 }
 
 export interface Cart {
@@ -57,13 +58,13 @@ export interface CartError {
 /**
  * Get session headers for API requests
  */
-function getCartHeaders(): Record<string, string> {
+function getCartHeaders(): RequestInit {
   const headers: Record<string, string> = {};
   const sessionId = getSessionId();
   if (sessionId) {
     headers['x-session-id'] = sessionId;
   }
-  return headers;
+  return { headers };
 }
 
 /**
@@ -74,7 +75,7 @@ function parseCartError(error: any): CartError {
   if (error?.response?.data?.error) {
     return error.response.data.error;
   }
-  
+
   // Error message from API client
   if (error?.message) {
     return {
@@ -83,7 +84,7 @@ function parseCartError(error: any): CartError {
       userAction: 'Please try again.'
     };
   }
-  
+
   return {
     code: 'UNKNOWN',
     message: 'Something went wrong.',
@@ -107,12 +108,12 @@ export function useCart() {
     queryFn: async (): Promise<Cart> => {
       const sessionId = getSessionId();
       const authToken = localStorage.getItem('auth_token');
-      
+
       // Fresh guest with no session - return empty cart
       if (!sessionId && !authToken) {
         return { id: 'new-guest', items: [], subtotal: 0 };
       }
-      
+
       try {
         const response = await api.get<Cart>("/api/cart", getCartHeaders(), CartConfig.CART_OPERATION_TIMEOUT_MS);
         return response;
@@ -129,7 +130,7 @@ export function useCart() {
   });
 
   // Get product IDs for targeted real-time subscription
-  const productIds = useMemo(() => 
+  const productIds = useMemo(() =>
     query.data?.items?.map(item => item.product_id) || [],
     [query.data?.items]
   );
@@ -174,6 +175,7 @@ export interface AddToCartInput {
   variant_id?: string;
   quantity: number;
   size?: string;
+  colour?: string;
 }
 
 /**
@@ -193,17 +195,18 @@ export function useAddToCart() {
           variant_id: input.variant_id,
           quantity: input.quantity,
           size: input.size,
+          colour: input.colour,
         },
         getCartHeaders(),
         CartConfig.CART_OPERATION_TIMEOUT_MS
       );
       return response;
     },
-    
+
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ["cart"] });
       const previousCart = queryClient.getQueryData<Cart>(["cart"]);
-      
+
       // Optimistic update
       if (previousCart) {
         const tempId = `temp_${Date.now()}`;
@@ -218,21 +221,22 @@ export function useAddToCart() {
               unit_price: 0, // Will be set by server
               quantity: input.quantity,
               size: input.size || null,
+              colour: input.colour || null,
             }
           ],
         };
         queryClient.setQueryData(["cart"], optimisticCart);
       }
-      
+
       return { previousCart };
     },
-    
+
     onError: (error: any, _input, context) => {
       // Rollback on error
       if (context?.previousCart) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
-      
+
       const cartError = parseCartError(error);
       toast({
         variant: "destructive",
@@ -240,7 +244,7 @@ export function useAddToCart() {
         description: cartError.userAction,
       });
     },
-    
+
     onSuccess: (data) => {
       queryClient.setQueryData(["cart"], data);
       if (data.message) {
@@ -278,11 +282,11 @@ export function useUpdateCartItem() {
         CartConfig.CART_OPERATION_TIMEOUT_MS
       );
     },
-    
+
     onMutate: async (input) => {
       await queryClient.cancelQueries({ queryKey: ["cart"] });
       const previousCart = queryClient.getQueryData<Cart>(["cart"]);
-      
+
       // Optimistic update
       if (previousCart) {
         const optimisticCart: Cart = {
@@ -295,15 +299,15 @@ export function useUpdateCartItem() {
         };
         queryClient.setQueryData(["cart"], optimisticCart);
       }
-      
+
       return { previousCart };
     },
-    
+
     onError: (error: any, _input, context) => {
       if (context?.previousCart) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
-      
+
       const cartError = parseCartError(error);
       toast({
         variant: "destructive",
@@ -311,7 +315,7 @@ export function useUpdateCartItem() {
         description: cartError.userAction,
       });
     },
-    
+
     onSuccess: (data) => {
       queryClient.setQueryData(["cart"], data);
     },
@@ -337,11 +341,11 @@ export function useRemoveCartItem() {
         CartConfig.CART_OPERATION_TIMEOUT_MS
       );
     },
-    
+
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ["cart"] });
       const previousCart = queryClient.getQueryData<Cart>(["cart"]);
-      
+
       // Optimistic update
       if (previousCart) {
         const optimisticCart: Cart = {
@@ -350,15 +354,15 @@ export function useRemoveCartItem() {
         };
         queryClient.setQueryData(["cart"], optimisticCart);
       }
-      
+
       return { previousCart };
     },
-    
+
     onError: (error: any, _id, context) => {
       if (context?.previousCart) {
         queryClient.setQueryData(["cart"], context.previousCart);
       }
-      
+
       const cartError = parseCartError(error);
       toast({
         variant: "destructive",
@@ -366,7 +370,7 @@ export function useRemoveCartItem() {
         description: cartError.userAction,
       });
     },
-    
+
     onSuccess: (data) => {
       queryClient.setQueryData(["cart"], data);
       toast({
@@ -392,7 +396,7 @@ export function useMergeGuestCart() {
       if (!sessionId) {
         return null;
       }
-      
+
       try {
         const result = await api.post<Cart>(
           "/api/cart/merge",
@@ -400,17 +404,17 @@ export function useMergeGuestCart() {
           undefined,
           CartConfig.CART_OPERATION_TIMEOUT_MS
         );
-        
+
         // Clear guest session after successful merge
         clearGuestSession();
-        
+
         return result;
       } catch (e) {
         console.error('[Cart] Merge failed:', e);
         return null;
       }
     },
-    
+
     onSuccess: (data) => {
       if (data) {
         queryClient.setQueryData(["cart"], data);
@@ -429,24 +433,24 @@ export function useMergeGuestCart() {
  */
 export function useCartTotals() {
   const { data: cart } = useCart();
-  
+
   return useMemo(() => {
     const items = cart?.items || [];
-    
+
     const subtotal = items.reduce((sum, item) => {
       const price = typeof item.unit_price === 'string'
         ? parseFloat(item.unit_price)
         : item.unit_price;
       return sum + (price * item.quantity);
     }, 0);
-    
+
     const shipping = subtotal >= CartConfig.FREE_SHIPPING_THRESHOLD
       ? 0
       : CartConfig.DEFAULT_SHIPPING_COST;
-    
+
     const tax = Math.round(subtotal * CartConfig.TAX_RATE * 100) / 100;
     const total = subtotal + shipping + tax;
-    
+
     return {
       subtotal,
       shipping,

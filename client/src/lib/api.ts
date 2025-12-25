@@ -1,6 +1,7 @@
 
 import { supabase } from "./supabase";
 import { toUserFriendlyError } from "./errors";
+import { getSessionId } from "./guestCart";
 
 export type ApiError = { code?: string; message: string };
 
@@ -15,7 +16,7 @@ async function handle<T>(res: Response): Promise<T> {
       // Only expose safe error info
       const data = await res.json();
       err = { code: data.code, message: data.message || err.message };
-    } catch {}
+    } catch { }
     throw toUserFriendlyError(err);
   }
   // Try to parse JSON, allow empty
@@ -30,7 +31,10 @@ async function handle<T>(res: Response): Promise<T> {
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 // Get auth headers from cache, localStorage, or Supabase session
+// For guests, includes x-session-id header instead of auth token
 async function getAuthHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = {};
+
   // 1. Check in-memory cache first (fastest)
   if (cachedToken && cachedToken.expiresAt > Date.now()) {
     return { Authorization: `Bearer ${cachedToken.token}` };
@@ -47,21 +51,21 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
         cachedToken = { token: localToken, expiresAt: parsed.expiresAt };
         return { Authorization: `Bearer ${localToken}` };
       }
-    } catch {}
+    } catch { }
   }
 
   // 3. Fallback to Supabase session (slowest)
   let session = null;
   try {
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('getSession timeout')), 1000)
     );
-    
+
     const result = await Promise.race([
       supabase.auth.getSession(),
       timeoutPromise
     ]) as any;
-    
+
     session = result.data?.session;
     if (session?.access_token) {
       // Cache the token
@@ -73,7 +77,17 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   }
 
   const token = session?.access_token;
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  if (token) {
+    return { Authorization: `Bearer ${token}` };
+  }
+
+  // 4. No auth token - include session ID for guest users
+  const sessionId = getSessionId();
+  if (sessionId) {
+    headers['x-session-id'] = sessionId;
+  }
+
+  return headers;
 }
 
 // Clear token cache (call on logout)
@@ -202,7 +216,7 @@ export const api = {
     return fetchWithTimeout(`${BASE}${path}`, {
       ...options,
       method: "POST",
-      headers, 
+      headers,
       body, // Pass FormData directly
       credentials: 'same-origin',
     }, timeout).then(handle<T>);

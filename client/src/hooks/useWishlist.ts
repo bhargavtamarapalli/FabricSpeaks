@@ -9,6 +9,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import type { Wishlist, WishlistItem, InsertWishlistItem } from "../../../shared/schema";
 
 /**
@@ -50,9 +51,10 @@ export interface WishlistWithItems extends Wishlist {
 /**
  * Hook to fetch all wishlists for the current user
  * 
+ * @param options.enabled - Whether query should run (default: true)
  * @returns Query result with wishlists array
  */
-export function useWishlists() {
+export function useWishlists(options?: { enabled?: boolean }) {
   return useQuery<WishlistWithCount[]>({
     queryKey: ["wishlists"],
     queryFn: async () => {
@@ -63,6 +65,7 @@ export function useWishlists() {
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: options?.enabled !== false, // Default true, but can be disabled
   });
 }
 
@@ -77,7 +80,7 @@ export function useWishlist(wishlistId: string | undefined) {
     queryKey: ["wishlist", wishlistId],
     queryFn: async () => {
       if (!wishlistId) throw new Error("Wishlist ID is required");
-      
+
       try {
         return await api.get<WishlistWithItems>(`/api/wishlists/${wishlistId}`);
       } catch (error: any) {
@@ -93,9 +96,10 @@ export function useWishlist(wishlistId: string | undefined) {
  * Hook to get the default wishlist
  * Creates one if it doesn't exist
  * 
+ * @param options.enabled - Whether query should run (default: true)
  * @returns Query result with default wishlist
  */
-export function useDefaultWishlist() {
+export function useDefaultWishlist(options?: { enabled?: boolean }) {
   return useQuery<Wishlist>({
     queryKey: ["wishlist", "default"],
     queryFn: async () => {
@@ -106,6 +110,7 @@ export function useDefaultWishlist() {
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: options?.enabled !== false, // Default true, but can be disabled
   });
 }
 
@@ -340,13 +345,15 @@ export function useRemoveFromWishlist() {
  * @returns Boolean indicating if item is in wishlist
  */
 export function useIsInWishlist(productId: string, variantId?: string | null) {
-  const { data: wishlists } = useWishlists();
-  const { data: defaultWishlist } = useDefaultWishlist();
+  const { user } = useAuth();
+
+  const { data: wishlists } = useWishlists({ enabled: !!user });
+  const { data: defaultWishlist } = useDefaultWishlist({ enabled: !!user });
 
   // Check if item is in default wishlist
   const { data: wishlistData } = useWishlist(defaultWishlist?.id);
 
-  if (!wishlistData?.items) return false;
+  if (!user || !wishlistData?.items) return false;
 
   return wishlistData.items.some(
     (item) =>

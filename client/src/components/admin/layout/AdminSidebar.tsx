@@ -96,7 +96,7 @@ export function AdminSidebar({
                 </nav>
 
                 {/* User section */}
-                <div className="border-t border-slate-800/50 p-4">
+                <div className="border-t border-border/50 p-4">
                     {isOpen ? (
                         <Link href="/">
                             <a className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
@@ -127,7 +127,7 @@ export function AdminSidebar({
                 )}
             >
                 {/* Logo */}
-                <div className="flex h-16 items-center justify-between border-b border-slate-800/50 px-4">
+                <div className="flex h-16 items-center justify-between border-b border-border/50 px-4">
                     <Link href="/admin">
                         <a
                             className="flex items-center gap-2 text-xl font-bold text-foreground"
@@ -157,17 +157,17 @@ export function AdminSidebar({
                 </nav>
 
                 {/* User section */}
-                <div className="border-t border-slate-800/50 p-4">
+                <div className="border-t border-border/50 p-4">
                     <Link href="/">
                         <a
-                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 transition-colors hover:bg-slate-800/50 hover:text-white"
+                            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
                             onClick={onMobileClose}
                         >
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-pink-500 text-xs font-semibold text-white">
                                 AD
                             </div>
                             <div className="flex-1 overflow-hidden">
-                                <p className="truncate font-medium text-white">Admin User</p>
+                                <p className="truncate font-medium text-foreground">Admin User</p>
                                 <p className="truncate text-xs">View Store</p>
                             </div>
                         </a>
@@ -200,21 +200,21 @@ function NavItem({ item, isActive, isCollapsed, onClick }: NavItemProps) {
                 className={cn(
                     'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
                     isActive
-                        ? 'bg-gradient-to-r from-indigo-500/20 to-pink-500/20 text-white shadow-lg shadow-indigo-500/10'
+                        ? 'admin-sidebar-item-active'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                     isCollapsed && 'justify-center'
                 )}
             >
                 {/* Active indicator */}
                 {isActive && (
-                    <span className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-indigo-500 to-pink-500" />
+                    <span className="admin-sidebar-indicator" />
                 )}
 
                 {/* Icon */}
                 <Icon
                     className={cn(
                         'h-5 w-5 flex-shrink-0 transition-transform group-hover:scale-110',
-                        isActive && 'text-indigo-400'
+                        isActive ? 'text-foreground' : 'text-muted-foreground'
                     )}
                 />
 
@@ -223,7 +223,7 @@ function NavItem({ item, isActive, isCollapsed, onClick }: NavItemProps) {
                     <>
                         <span className="flex-1">{item.label}</span>
                         {item.badge && (
-                            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-indigo-500 px-1.5 text-xs font-semibold text-white">
+                            <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
                                 {item.badge}
                             </span>
                         )}

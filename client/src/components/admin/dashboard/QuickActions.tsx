@@ -125,11 +125,11 @@ export function QuickActions({
     };
 
     return (
-        <div className={cn('rounded-xl border border-slate-800/50 bg-slate-900/50 p-6', className)}>
+        <div className={cn('rounded-xl border border-border bg-card p-6 shadow-sm', className)}>
             {/* Header */}
             <div className="mb-6">
-                <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
-                <p className="mt-1 text-sm text-slate-400">
+                <h3 className="text-lg font-bold text-foreground">Quick Actions</h3>
+                <p className="mt-0.5 text-sm text-muted-foreground">
                     Common tasks and shortcuts
                 </p>
             </div>
@@ -162,7 +162,7 @@ function QuickActionButton({ action, onClick }: QuickActionButtonProps) {
     return (
         <button
             onClick={onClick}
-            className="group relative overflow-hidden rounded-lg border border-slate-800/50 bg-slate-900/30 p-4 text-left transition-all hover:border-slate-700/50 hover:bg-slate-800/30 hover:shadow-lg"
+            className="group relative overflow-hidden rounded-lg border border-border bg-muted/30 p-4 text-left transition-all hover:border-primary/20 hover:bg-muted/50 hover:shadow-sm"
         >
             {/* Gradient overlay on hover */}
             <div className={cn(
@@ -181,10 +181,10 @@ function QuickActionButton({ action, onClick }: QuickActionButtonProps) {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white group-hover:text-indigo-400 transition-colors">
+                    <p className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                         {action.label}
                     </p>
-                    <p className="mt-0.5 text-xs text-slate-400 truncate">
+                    <p className="mt-0.5 text-xs text-muted-foreground truncate">
                         {action.description}
                     </p>
                 </div>
@@ -227,8 +227,8 @@ export function QuickActionsCompact({
                         key={action.id}
                         onClick={() => handleActionClick(action)}
                         className={cn(
-                            'group flex items-center gap-2 rounded-lg border border-slate-800/50 bg-gradient-to-br px-4 py-2 text-sm font-medium text-white transition-all hover:scale-105 hover:shadow-lg',
-                            action.color
+                            'group flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-bold text-foreground transition-all hover:scale-105 hover:shadow-md',
+                            'hover:border-primary/50'
                         )}
                         title={action.description}
                     >

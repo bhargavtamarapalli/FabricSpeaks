@@ -153,59 +153,59 @@ export default function AdminSettings() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-white">Settings</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="admin-page-title">Settings</h1>
+          <p className="admin-page-subtitle">
             Manage your store profile, security, and team access.
           </p>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="border-slate-800 bg-slate-900/50">
+          <TabsList className="bg-muted border border-border p-1">
             <TabsTrigger
               value="general"
-              className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+              className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               <Settings className="mr-2 h-4 w-4" />
               General
             </TabsTrigger>
             <TabsTrigger
               value="security"
-              className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+              className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               <Shield className="mr-2 h-4 w-4" />
               Security
             </TabsTrigger>
             <TabsTrigger
               value="team"
-              className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+              className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               <Users className="mr-2 h-4 w-4" />
               Team
             </TabsTrigger>
             <TabsTrigger
               value="notifications"
-              className="data-[state=active]:bg-indigo-500 data-[state=active]:text-white"
+              className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               <Bell className="mr-2 h-4 w-4" />
               Notifications
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+          <TabsContent value="general" className="admin-card">
             <GeneralSettings
               onSave={updateGeneralSettings}
             />
           </TabsContent>
 
-          <TabsContent value="security" className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+          <TabsContent value="security" className="admin-card">
             <SecuritySettings
               onUpdatePassword={updatePassword}
               onToggle2FA={toggle2FA}
             />
           </TabsContent>
 
-          <TabsContent value="team" className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+          <TabsContent value="team" className="admin-card">
             <TeamSettings
               members={members}
               onInvite={inviteMutation.mutateAsync}
@@ -215,10 +215,10 @@ export default function AdminSettings() {
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">
-            <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+            <div className="admin-card">
               <NotificationPreferences />
             </div>
-            <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
+            <div className="admin-card">
               <NotificationRecipients />
             </div>
           </TabsContent>

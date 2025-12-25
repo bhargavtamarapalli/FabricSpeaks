@@ -25,6 +25,7 @@ import { SocketProvider } from "@/providers/SocketProvider";
 import Home from "@/pages/Home";
 import ProductPage from "@/pages/ProductPage";
 import Orders from "@/pages/Orders";
+import OrderDetail from "@/pages/OrderDetail";
 import Profile from "@/pages/Profile";
 import Wishlist from "@/pages/Wishlist";
 import Clothing from "@/pages/Clothing";
@@ -49,7 +50,7 @@ import ShippingReturns from "@/pages/ShippingReturns";
 import SizeGuide from "@/pages/SizeGuide";
 import SignatureCollectionPage from "@/pages/SignatureCollection";
 import SignatureProductDetail from "@/pages/SignatureProductDetail";
-import DebugAuth from "@/pages/DebugAuth";
+
 
 // Admin Pages (Lazy Loaded)
 const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
@@ -67,11 +68,18 @@ const AdminTeam = lazy(() => import("@/pages/admin/Team"));
 const AdminProfile = lazy(() => import("@/pages/admin/AdminProfile"));
 const AdminSignatureProducts = lazy(() => import("@/pages/admin/SignatureProducts"));
 const AdminContent = lazy(() => import("@/pages/admin/Content"));
+const AdminLogin = lazy(() => import("@/pages/admin/Login"));
 
 function Router() {
   return (
     <Switch>
       {/* Admin Routes - Must be before other routes to take precedence */}
+      <Route path="/admin/login">
+        <Suspense fallback={<LoadingScreen />}>
+          <AdminLogin />
+        </Suspense>
+      </Route>
+
       <Route path="/admin">
         <SocketProvider>
           <Suspense fallback={<LoadingScreen />}>
@@ -235,6 +243,7 @@ function Router() {
       {/* E-commerce Routes */}
       <Route path="/" component={Home} />
       <Route path="/product/:id" component={ProductPage} />
+      <Route path="/orders/:id" component={OrderDetail} />
       <Route path="/orders" component={Orders} />
       <Route path="/profile" component={Profile} />
       <Route path="/wishlist" component={Wishlist} />
@@ -259,7 +268,7 @@ function Router() {
       <Route path="/size-guide" component={SizeGuide} />
       <Route path="/signature-collection" component={SignatureCollectionPage} />
       <Route path="/signature/:slug" component={SignatureProductDetail} />
-      <Route path="/debug-auth" component={DebugAuth} />
+
       <Route component={NotFound} />
     </Switch>
   );
@@ -286,6 +295,17 @@ function AppContent() {
     initializeSecurity({
       apiUrl,
       onUnauthorized: () => {
+        // Don't redirect if already on login or auth pages
+        const currentPath = window.location.pathname;
+        const isOnLoginPage = currentPath === '/admin/login' ||
+          currentPath.startsWith('/auth/') ||
+          currentPath === '/auth';
+
+        if (isOnLoginPage) {
+          logger.debug('User is on login page, skipping unauthorized redirect');
+          return;
+        }
+
         logger.warn('User session expired - redirecting to login');
         toast({
           title: "Session Expired",

@@ -127,8 +127,11 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-stone-200 dark:border-neutral-800 gap-6">
-          <p className="text-sm text-stone-500 dark:text-neutral-500 font-light">
-            © 2025 Fabric Speaks. All rights reserved.
+          <p className="text-sm text-stone-500 dark:text-neutral-500 font-light flex items-center gap-4">
+            <span>© 2025 Fabric Speaks. All rights reserved.</span>
+            <Link href="/admin/login">
+              <span className="text-xs hover:text-stone-900 dark:hover:text-white transition-colors cursor-pointer opacity-50 hover:opacity-100">Admin</span>
+            </Link>
           </p>
 
           <div className="flex items-center gap-4">

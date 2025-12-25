@@ -101,24 +101,24 @@ if (process.env.NODE_ENV === 'development') {
         directives: {
           defaultSrc: ["'self'"],
           scriptSrc: [
-            "'self'", 
-            "'unsafe-inline'", 
-            "https://checkout.razorpay.com", 
+            "'self'",
+            "'unsafe-inline'",
+            "https://checkout.razorpay.com",
             "https://*.razorpay.com"
           ],
           styleSrc: [
-            "'self'", 
-            "'unsafe-inline'", 
+            "'self'",
+            "'unsafe-inline'",
             "https://fonts.googleapis.com"
           ],
           fontSrc: [
-            "'self'", 
+            "'self'",
             "https://fonts.gstatic.com"
           ],
           imgSrc: [
-            "'self'", 
-            "data:", 
-            "blob:", 
+            "'self'",
+            "data:",
+            "blob:",
             "https://*.razorpay.com",
             "https://images.unsplash.com",
             "https://*.unsplash.com"
@@ -131,8 +131,8 @@ if (process.env.NODE_ENV === 'development') {
             "wss://*.supabase.co"
           ],
           frameSrc: [
-            "'self'", 
-            "https://checkout.razorpay.com", 
+            "'self'",
+            "https://checkout.razorpay.com",
             "https://api.razorpay.com"
           ],
         },
@@ -229,12 +229,17 @@ process.on('uncaughtException', (err) => {
 
 // CSRF Protection (skip for webhooks and safe methods)
 const conditionalCsrf = (req: Request, res: Response, next: NextFunction) => {
-  // Skip CSRF for webhooks, tests, and debug endpoints
-  if (req.path.startsWith('/api/webhooks') || req.path.startsWith('/api/debug') || process.env.NODE_ENV === 'test') return next();
-  
+  // Skip CSRF for webhooks, tests, debug endpoints, and OAuth flows
+  if (
+    req.path.startsWith('/api/webhooks') ||
+    req.path.startsWith('/api/debug') ||
+    req.path.startsWith('/api/auth/oauth') || // OAuth has its own token-based auth
+    process.env.NODE_ENV === 'test'
+  ) return next();
+
   // Apply CSRF protection with ignore paths for webhooks
   return csrfProtection({
-    ignorePaths: ['/api/webhooks']
+    ignorePaths: ['/api/webhooks', '/api/auth/oauth']
   })(req, res, next);
 };
 
@@ -282,12 +287,12 @@ export const setupServer = async () => {
   const server = await registerRoutes(app);
   // const server = require('http').createServer(app);
   console.error('DEBUG: Routes registered');
-  
+
   // Initialize Socket.IO
   initSocket(server);
   console.log('DEBUG: Socket initialized');
 
-    // Sentry error handler (must be before global error handler)
+  // Sentry error handler (must be before global error handler)
   app.use(sentryErrorHandler);
 
   app.use(globalErrorHandler);
@@ -309,7 +314,7 @@ export const setupServer = async () => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  
+
   // Do NOT listen if running in test environment (Supertest handles binding)
   if (process.env.NODE_ENV !== 'test') {
     server.listen({
@@ -317,17 +322,17 @@ export const setupServer = async () => {
       host: "0.0.0.0",
     }, () => {
       log(`serving on port ${port}`);
-      
+
       // Schedule Low Stock Alert Job (every hour)
       setInterval(() => {
         checkLowStock().catch(err => console.error('Low stock job failed:', err));
       }, 60 * 60 * 1000);
-      
+
       // Schedule Stock Notification Job (every hour)
       setInterval(() => {
         checkStockAndNotify().catch(err => console.error('Stock notification job failed:', err));
       }, 60 * 60 * 1000);
-      
+
       // Run stock notification job immediately on startup (optional)
       checkStockAndNotify().catch(err => console.error('Initial stock notification check failed:', err));
     });

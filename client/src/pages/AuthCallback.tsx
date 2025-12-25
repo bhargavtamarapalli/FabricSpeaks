@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -12,7 +12,16 @@ export default function AuthCallback() {
     const [, setLocation] = useLocation();
     const { refreshMe } = useAuth();
 
+    // Ref to prevent processing the callback multiple times
+    const isProcessedRef = useRef(false);
+
     useEffect(() => {
+        // Guard: Only process once
+        if (isProcessedRef.current) {
+            console.log('[AuthCallback] Already processed, skipping...');
+            return;
+        }
+
         let mounted = true;
         const timeoutId = setTimeout(() => {
             if (mounted) {
@@ -142,13 +151,16 @@ export default function AuthCallback() {
             }
         };
 
+        // Mark as processed immediately to prevent re-runs
+        isProcessedRef.current = true;
         handleCallback();
 
         return () => {
             mounted = false;
             clearTimeout(timeoutId);
         };
-    }, [setLocation, refreshMe]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [setLocation]); // Removed refreshMe - it's called internally and causes re-renders
 
     if (errorState) {
         return (

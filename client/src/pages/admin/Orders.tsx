@@ -101,15 +101,15 @@ export default function AdminOrders() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-white">Orders</h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <h1 className="admin-page-title">Orders</h1>
+            <p className="admin-page-subtitle">
               View and manage customer orders and shipments.
             </p>
           </div>
           <Button
             variant="outline"
             onClick={handleExport}
-            className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+            className="text-foreground hover:bg-muted"
           >
             <Download className="mr-2 h-4 w-4" />
             Export Orders
@@ -117,10 +117,10 @@ export default function AdminOrders() {
         </div>
 
         {/* Filters Toolbar */}
-        <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-4">
+        <div className="admin-card !p-4">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-sm font-medium text-white">
-              <Filter className="h-4 w-4 text-indigo-400" />
+            <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+              <Filter className="h-4 w-4 text-primary" />
               Filters
             </div>
             {hasActiveFilters && (
@@ -128,7 +128,7 @@ export default function AdminOrders() {
                 variant="ghost"
                 size="sm"
                 onClick={resetFilters}
-                className="h-8 px-2 text-xs text-slate-400 hover:text-white"
+                className="h-8 px-2 text-xs text-muted-foreground hover:text-foreground"
               >
                 Reset
                 <X className="ml-2 h-3 w-3" />
@@ -139,29 +139,29 @@ export default function AdminOrders() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Search */}
             <div className="space-y-2">
-              <Label className="text-xs text-slate-400">Search</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Search</Label>
               <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Order #, Customer, Email..."
                   value={filters.search || ''}
                   onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="pl-8 border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
+                  className="pl-9 bg-muted/50 border-border"
                 />
               </div>
             </div>
 
             {/* Status */}
             <div className="space-y-2">
-              <Label className="text-xs text-slate-400">Status</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Status</Label>
               <Select
                 value={filters.status || 'all'}
                 onValueChange={(val) => handleFilterChange('status', val)}
               >
-                <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                <SelectTrigger className="bg-muted/50 border-border">
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
-                <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
                   {ORDER_STATUSES.map((status) => (
                     <SelectItem key={status.value} value={status.value}>
@@ -174,15 +174,15 @@ export default function AdminOrders() {
 
             {/* Payment Status */}
             <div className="space-y-2">
-              <Label className="text-xs text-slate-400">Payment</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Payment</Label>
               <Select
                 value={filters.paymentStatus || 'all'}
                 onValueChange={(val) => handleFilterChange('paymentStatus', val)}
               >
-                <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                <SelectTrigger className="bg-muted/50 border-border">
                   <SelectValue placeholder="All Payments" />
                 </SelectTrigger>
-                <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                <SelectContent>
                   <SelectItem value="all">All Payments</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
@@ -193,7 +193,7 @@ export default function AdminOrders() {
 
             {/* Date Range (Simplified for now) */}
             <div className="space-y-2">
-              <Label className="text-xs text-slate-400">Time Period</Label>
+              <Label className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Time Period</Label>
               <Select
                 value={filters.startDate ? 'custom' : 'all'}
                 onValueChange={(val) => {
@@ -204,10 +204,10 @@ export default function AdminOrders() {
                   }
                 }}
               >
-                <SelectTrigger className="border-slate-700 bg-slate-800 text-white">
+                <SelectTrigger className="bg-muted/50 border-border">
                   <SelectValue placeholder="All Time" />
                 </SelectTrigger>
-                <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                <SelectContent>
                   <SelectItem value="all">All Time</SelectItem>
                   <SelectItem value="today">Today</SelectItem>
                   <SelectItem value="week">This Week</SelectItem>

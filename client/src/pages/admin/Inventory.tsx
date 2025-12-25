@@ -158,8 +158,8 @@ export default function AdminInventory() {
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Inventory</h1>
-                        <p className="mt-1 text-sm text-slate-400">
+                        <h1 className="admin-page-title">Inventory</h1>
+                        <p className="admin-page-subtitle">
                             Track stock levels and manage adjustments.
                         </p>
                     </div>
@@ -167,14 +167,14 @@ export default function AdminInventory() {
                         <Button
                             variant="outline"
                             onClick={() => refetch()}
-                            className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+                            className="text-foreground hover:bg-muted"
                         >
                             <RefreshCw className="mr-2 h-4 w-4" />
                             Refresh
                         </Button>
                         <Button
                             onClick={handleExport}
-                            className="bg-gradient-to-r from-indigo-500 to-pink-500 hover:from-indigo-600 hover:to-pink-600"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                             <Download className="mr-2 h-4 w-4" />
                             Export Report
@@ -185,29 +185,31 @@ export default function AdminInventory() {
                 {/* Header End */}
 
                 <Tabs defaultValue="stock" className="space-y-6">
-                    <TabsList className="bg-slate-800 border-slate-700">
-                        <TabsTrigger value="stock" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white text-slate-400">Stock Levels</TabsTrigger>
-                        <TabsTrigger value="intelligence" className="data-[state=active]:bg-slate-900 data-[state=active]:text-white text-slate-400">Intelligence & Predictions</TabsTrigger>
+                    <TabsList className="bg-muted p-1">
+                        <TabsTrigger value="stock" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground font-semibold">Stock Levels</TabsTrigger>
+                        <TabsTrigger value="intelligence" className="data-[state=active]:bg-card data-[state=active]:text-foreground text-muted-foreground font-semibold">Intelligence & Predictions</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="stock" className="space-y-6">
                         {/* Filters */}
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                             <div className="relative flex-1 max-w-sm">
-                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     placeholder="Search by name or SKU..."
                                     value={search}
                                     onChange={(e) => setSearch(e.target.value)}
-                                    className="pl-8 border-slate-700 bg-slate-800 text-white placeholder:text-slate-500"
+                                    className="pl-9 bg-muted/50 border-border"
                                 />
                             </div>
                             <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-[180px] border-slate-700 bg-slate-800 text-white">
-                                    <Filter className="mr-2 h-4 w-4" />
-                                    <SelectValue placeholder="Filter by status" />
+                                <SelectTrigger className="w-[180px] bg-muted/50 border-border">
+                                    <div className="flex items-center">
+                                        <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+                                        <SelectValue placeholder="Filter by status" />
+                                    </div>
                                 </SelectTrigger>
-                                <SelectContent className="border-slate-700 bg-slate-800 text-white">
+                                <SelectContent>
                                     <SelectItem value="all">All Status</SelectItem>
                                     <SelectItem value="in-stock">In Stock</SelectItem>
                                     <SelectItem value="low-stock">Low Stock</SelectItem>
@@ -235,24 +237,24 @@ export default function AdminInventory() {
                                 />
 
                                 {/* Quick Stats */}
-                                <div className="rounded-xl border border-slate-800/50 bg-slate-900/50 p-6">
-                                    <h3 className="mb-4 text-lg font-semibold text-white">Inventory Summary</h3>
+                                <div className="admin-card">
+                                    <h3 className="mb-4 text-lg font-bold text-foreground">Inventory Summary</h3>
                                     <div className="space-y-4">
-                                        <div className="flex justify-between border-b border-slate-800/50 pb-2">
-                                            <span className="text-slate-400">Total Items</span>
-                                            <span className="font-medium text-white">
+                                        <div className="flex justify-between border-b border-border pb-2">
+                                            <span className="text-muted-foreground font-medium">Total Items</span>
+                                            <span className="font-bold text-foreground">
                                                 {totalItems}
                                             </span>
                                         </div>
-                                        <div className="flex justify-between border-b border-slate-800/50 pb-2">
-                                            <span className="text-slate-400">Total Value</span>
-                                            <span className="font-medium text-white">
+                                        <div className="flex justify-between border-b border-border pb-2">
+                                            <span className="text-muted-foreground font-medium">Total Value</span>
+                                            <span className="font-bold text-foreground">
                                                 ₹{totalValue.toLocaleString()}
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-slate-400">Low Stock Items</span>
-                                            <span className="font-medium text-yellow-400">
+                                            <span className="text-muted-foreground font-medium">Low Stock Items</span>
+                                            <span className="font-bold text-orange-500">
                                                 {lowStockCount}
                                             </span>
                                         </div>

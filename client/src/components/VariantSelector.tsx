@@ -37,6 +37,12 @@ interface VariantSelectorProps {
 
     /** Show stock status (default: true) */
     showStock?: boolean;
+
+    /** Initial size to pre-select (e.g., from cart navigation) */
+    initialSize?: string | null;
+
+    /** Initial colour to pre-select (e.g., from cart navigation) */
+    initialColour?: string | null;
 }
 
 /**
@@ -58,16 +64,44 @@ export function VariantSelector({
     onVariantChange,
     className = "",
     showStock = true,
+    initialSize = null,
+    initialColour = null,
 }: VariantSelectorProps) {
     const { data: variants, isLoading, error } = useProductVariants(productId);
 
     const [selectedSize, setSelectedSize] = useState<string | null>(null);
     const [selectedColour, setSelectedColour] = useState<string | null>(null);
     const [currentVariant, setCurrentVariant] = useState<ProductVariant | null>(null);
+    const [hasInitialized, setHasInitialized] = useState(false);
 
     // Extract unique sizes and colours
     const sizes = getUniqueSizes(variants);
     const colours = getUniqueColours(variants);
+
+    // Initialize with initial values once variants are loaded
+    useEffect(() => {
+        if (!hasInitialized && variants && variants.length > 0) {
+            // Check if initialColour exists in available colours (case-insensitive)
+            if (initialColour) {
+                const matchingColour = colours.find(
+                    c => c.toLowerCase() === initialColour.toLowerCase()
+                );
+                if (matchingColour) {
+                    setSelectedColour(matchingColour);
+                }
+            }
+            // Check if initialSize exists in available sizes (case-insensitive)
+            if (initialSize) {
+                const matchingSize = sizes.find(
+                    s => s.toLowerCase() === initialSize.toLowerCase()
+                );
+                if (matchingSize) {
+                    setSelectedSize(matchingSize);
+                }
+            }
+            setHasInitialized(true);
+        }
+    }, [variants, initialSize, initialColour, colours, sizes, hasInitialized]);
 
     /**
      * Find and update the matching variant when selection changes

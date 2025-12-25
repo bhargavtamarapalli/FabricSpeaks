@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import PageLayout from "@/components/PageLayout";
 import comingSoonImage from "@assets/coming_soon.png";
 import { ArrowRight, Bell, Lock, Sparkles } from "lucide-react";
 
@@ -179,7 +178,7 @@ export default function AccessoriesDesignMockup() {
     const [version, setVersion] = useState(0);
 
     return (
-        <div className="min-h-screen flex flex-col font-sans">
+        <PageLayout className="min-h-screen flex flex-col font-sans">
             {/* Control Panel */}
             <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-black/90 backdrop-blur-md text-white px-6 py-3 rounded-full flex gap-4 shadow-2xl border border-white/20">
                 <span className="text-xs font-bold uppercase tracking-widest self-center mr-2 text-neutral-400">Design Ver:</span>
@@ -203,15 +202,11 @@ export default function AccessoriesDesignMockup() {
                 </button>
             </div>
 
-            <Header />
-
-            <main className="flex-1">
+            <main className="flex-1 w-full">
                 {version === 0 && <AccessoriesVersion1 />}
                 {version === 1 && <AccessoriesVersion2 />}
                 {version === 2 && <AccessoriesVersion3 />}
             </main>
-
-            <Footer />
-        </div>
+        </PageLayout>
     );
 }

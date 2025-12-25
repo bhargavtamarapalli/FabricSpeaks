@@ -1,11 +1,14 @@
-import { eq, and, or, ilike, desc, asc, count, gte, lte, lt, gt, sql, type SQL } from "drizzle-orm";
 import { db } from "../supabase";
 import { products, categories, type Product, type InsertProduct } from "../../../shared/schema";
-import { 
-  createPaginatedResponse, 
-  decodeCursor, 
-  type PaginatedResponse 
+import {
+  createPaginatedResponse,
+  decodeCursor,
+  type PaginatedResponse
 } from "../../services/pagination";
+import {
+  eq, and, or, lt, gt, lte, gte, ilike,
+  isNull, isNotNull, count, desc, asc, type SQL
+} from "drizzle-orm";
 
 /**
  * Product list options with cursor-based pagination support
@@ -82,9 +85,14 @@ export class SupabaseProductsRepository implements ProductsRepository {
       // Category Filter
       // Handle special flags
       if (options.categoryId === 'sale') {
-        conditions.push(eq(products.is_on_sale, true));
+        conditions.push(and(
+          isNotNull(products.sale_price),
+          lt(products.sale_price, products.price),
+          or(isNull(products.sale_start_at), lte(products.sale_start_at, new Date())),
+          or(isNull(products.sale_end_at), gte(products.sale_end_at, new Date()))
+        ));
       }
-      
+
       if (options.categoryId === 'new') {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -100,16 +108,16 @@ export class SupabaseProductsRepository implements ProductsRepository {
           .from(categories)
           .where(ilike(categories.name, options.categorySlug))
           .limit(1);
-          
+
         if (categoryResult.length > 0) {
           const parentCategoryId = categoryResult[0].id;
-          
+
           // Check if this category has children
           const childCategories = await db
             .select()
             .from(categories)
             .where(eq(categories.parent_id, parentCategoryId));
-          
+
           if (childCategories.length > 0) {
             // Include products from parent and all child categories
             const categoryIds = [parentCategoryId, ...childCategories.map(c => c.id)];
@@ -122,7 +130,7 @@ export class SupabaseProductsRepository implements ProductsRepository {
           }
         } else {
           // Return empty result if category not found
-          return useCursorPagination 
+          return useCursorPagination
             ? { items: [], nextCursor: null, hasMore: false }
             : { items: [], total: 0 };
         }
@@ -137,7 +145,7 @@ export class SupabaseProductsRepository implements ProductsRepository {
           ilike(products.brand, searchTerm)
         ) as SQL<unknown>);
       }
-      
+
       // Fabric Filter
       if (options.fabric) {
         conditions.push(ilike(products.fabric, options.fabric));
@@ -195,7 +203,7 @@ export class SupabaseProductsRepository implements ProductsRepository {
       // Determine sort order
       let orderBy: SQL<unknown> = desc(products.created_at);
       const sortBy = options.categoryId === 'new' ? 'newest' : (options.sortBy || 'newest');
-      
+
       switch (sortBy) {
         case 'price_asc':
           orderBy = asc(products.price);
@@ -240,10 +248,10 @@ export class SupabaseProductsRepository implements ProductsRepository {
         };
 
         // Get total count only if requested (expensive operation)
-        const total = options.includeTotal 
+        const total = options.includeTotal
           ? Number((await db.select({ count: count() })
-              .from(products)
-              .where(whereClause))[0].count)
+            .from(products)
+            .where(whereClause))[0].count)
           : undefined;
 
         // Transform items to include images array

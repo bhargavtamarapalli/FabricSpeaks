@@ -69,30 +69,30 @@ export function AdminLayout({ children, className }: AdminLayoutProps) {
                 </main>
 
                 {/* Footer */}
-                <footer className="border-t border-slate-800/50 bg-slate-900/50 px-4 py-6 lg:px-6">
+                <footer className="border-t border-border/50 bg-muted/30 px-4 py-6 lg:px-6">
                     <div className="mx-auto max-w-7xl">
                         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                            <p className="text-sm text-slate-400">
+                            <p className="text-sm text-muted-foreground">
                                 © {new Date().getFullYear()} Fabric Speaks. All rights reserved.
                             </p>
-                            <div className="flex items-center gap-4 text-sm text-slate-400">
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                 <a
                                     href="/help"
-                                    className="transition-colors hover:text-slate-200"
+                                    className="transition-colors hover:text-foreground"
                                 >
                                     Help
                                 </a>
                                 <span>•</span>
                                 <a
                                     href="/privacy"
-                                    className="transition-colors hover:text-slate-200"
+                                    className="transition-colors hover:text-foreground"
                                 >
                                     Privacy
                                 </a>
                                 <span>•</span>
                                 <a
                                     href="/terms"
-                                    className="transition-colors hover:text-slate-200"
+                                    className="transition-colors hover:text-foreground"
                                 >
                                     Terms
                                 </a>

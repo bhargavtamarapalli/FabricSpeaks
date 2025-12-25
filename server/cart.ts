@@ -36,7 +36,7 @@ function getIdentity(req: Request): { userId: string | null; sessionId: string |
 export async function getCartHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { userId, sessionId } = getIdentity(req);
-    
+
     console.log(`[CART] Get Cart - User: ${userId || 'GUEST'}, Session: ${sessionId || 'NONE'}`);
 
     if (userId) {
@@ -44,15 +44,15 @@ export async function getCartHandler(req: Request, res: Response, next: NextFunc
       console.log(`[CART] User Cart ${cart.id}: ${cart.items.length} items`);
       return res.json({ success: true, ...cart });
     }
-    
+
     if (!sessionId) {
       throw new CartError('SESSION_REQUIRED');
     }
-    
+
     const cart = await cartsRepo.getOrCreateBySession(sessionId);
     console.log(`[CART] Guest Cart ${cart.id}: ${cart.items.length} items`);
     return res.json({ success: true, ...cart });
-    
+
   } catch (error) {
     next(error);
   }
@@ -65,12 +65,13 @@ export async function getCartHandler(req: Request, res: Response, next: NextFunc
 export async function addCartItemHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { userId, sessionId } = getIdentity(req);
-    
+
     // Accept both snake_case and camelCase
     const productId = req.body.product_id || req.body.productId;
     const variantId = req.body.variant_id || req.body.variantId || null;
     const quantity = req.body.quantity;
     const size = req.body.size || null;
+    const colour = req.body.colour || null;
 
     console.log(`[CART] Add Item Request:`, {
       userId: userId || 'GUEST',
@@ -79,6 +80,7 @@ export async function addCartItemHandler(req: Request, res: Response, next: Next
       variantId,
       quantity,
       size,
+      colour,
       body: req.body
     });
 
@@ -94,7 +96,7 @@ export async function addCartItemHandler(req: Request, res: Response, next: Next
         }
       });
     }
-    
+
     if (typeof quantity !== 'number' || quantity < 1) {
       console.error('[CART] Invalid quantity:', quantity, typeof quantity);
       return res.status(400).json({
@@ -110,7 +112,7 @@ export async function addCartItemHandler(req: Request, res: Response, next: Next
     // Validate item can be added (stock, price, etc.)
     console.log('[CART] Validating item addition...');
     const validation = await cartService.validateItemAddition(productId, variantId, quantity);
-    
+
     console.log('[CART] Validation result:', validation);
 
     if (!validation.valid) {
@@ -164,25 +166,25 @@ export async function addCartItemHandler(req: Request, res: Response, next: Next
     // Add item with SERVER-SIDE PRICE (critical security fix)
     const serverPrice = validation.data!.currentPrice;
     console.log('[CART] Adding item with server price:', serverPrice);
-    
-    const updated = await cartsRepo.addItem(cart.id, productId, serverPrice, quantity, size, variantId);
-    
+
+    const updated = await cartsRepo.addItem(cart.id, productId, serverPrice, quantity, size, variantId, colour);
+
     console.log(`[CART] Success: Added ${validation.data!.productName} x${quantity} @ ₹${serverPrice}`);
-    
-    return res.json({ 
-      success: true, 
+
+    return res.json({
+      success: true,
       ...updated,
       message: `Added ${validation.data!.productName} to cart`
     });
-    
+
   } catch (error: any) {
     console.error('[CART] Unexpected error in addCartItemHandler:', error);
-    
+
     // Handle CartError directly instead of passing to next()
     if (isCartError(error)) {
       return res.status(error.status).json(error.toResponse());
     }
-    
+
     // Unknown error
     return res.status(500).json({
       success: false,
@@ -236,15 +238,15 @@ export async function updateCartItemHandler(req: Request, res: Response, next: N
     }
 
     const updated = await cartsRepo.updateItemQuantity(id, quantity);
-    
+
     console.log(`[CART] Updated item ${id} to qty ${quantity}`);
-    
-    return res.json({ 
-      success: true, 
+
+    return res.json({
+      success: true,
       ...updated,
       message: 'Cart updated'
     });
-    
+
   } catch (error) {
     next(error);
   }
@@ -258,17 +260,17 @@ export async function updateCartItemHandler(req: Request, res: Response, next: N
 export async function removeCartItemHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { id } = req.params;
-    
+
     console.log(`[CART] Remove Item ${id}`);
 
     const updated = await cartsRepo.removeItem(id);
-    
-    return res.json({ 
-      success: true, 
+
+    return res.json({
+      success: true,
       ...updated,
       message: 'Item removed from cart'
     });
-    
+
   } catch (error) {
     next(error);
   }
@@ -281,35 +283,35 @@ export async function removeCartItemHandler(req: Request, res: Response, next: N
 export async function mergeGuestCartHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = (req as any).user?.user_id as string;
-    
+
     if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        error: { 
-          code: 'UNAUTHORIZED', 
-          message: 'Please log in to continue' 
-        } 
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Please log in to continue'
+        }
       });
     }
-    
+
     const sessionId = req.body.sessionId || req.body.session_id;
-    
+
     if (!sessionId) {
       throw new CartError('SESSION_REQUIRED');
     }
-    
+
     console.log(`[CART] Merging guest cart ${sessionId} into user ${userId}`);
-    
+
     const mergedCart = await cartsRepo.mergeGuestCart(userId, sessionId);
-    
+
     console.log(`[CART] Merge complete: ${mergedCart.items.length} items`);
-    
-    return res.json({ 
-      success: true, 
+
+    return res.json({
+      success: true,
       ...mergedCart,
       message: 'Your cart items have been saved to your account'
     });
-    
+
   } catch (error) {
     next(error);
   }

@@ -77,20 +77,7 @@ export function useCheckout() {
           throw new Error("Cart is empty");
         }
 
-        const validationResponse = await api.post<any>(
-          "/api/cart/validate-for-checkout",
-          { cart: payload.cart },
-          undefined,
-          10000
-        );
-
-        if (!validationResponse.isValid) {
-          const errorMessages = validationResponse.errors
-            .map((e: any) => e.message)
-            .join("; ");
-          throw new Error(`Cart validation failed: ${errorMessages}`);
-        }
-
+        // Validation is handled by the checkout endpoint itself
         return await api.post<any>("/api/orders/checkout", payload, undefined, 10000);
       } catch (e: any) {
         throw new Error(e?.message || "Checkout failed");
@@ -99,4 +86,28 @@ export function useCheckout() {
   });
 }
 
+/**
+ * Cancel an order
+ */
+export function useCancelOrder() {
+  const queryClient = useQueryClient();
 
+  return useMutation({
+    mutationFn: async (orderId: string) => {
+      try {
+        return await api.post<{ success: boolean; message: string }>(
+          `/api/orders/${orderId}/cancel`,
+          {},
+          undefined,
+          10000
+        );
+      } catch (e: any) {
+        throw new Error(e?.message || "Failed to cancel order");
+      }
+    },
+    onSuccess: () => {
+      // Invalidate orders list to refresh with updated status
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+    }
+  });
+}

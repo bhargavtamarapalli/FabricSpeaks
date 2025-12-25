@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { db } from "./db/supabase";
-import { profiles, loginAttempts, passwordResets } from "../shared/schema";
+import { profiles, loginAttempts, passwordResets, verifications } from "../shared/schema";
 import { eq, and, gte, sql } from "drizzle-orm";
 import { ERROR_CODES, handleRouteError } from "./utils/errors";
 import { whatsappService } from "./services/whatsapp-notifications";
@@ -17,8 +17,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 // Strong password regex: At least 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
-const registerSchema = z.object({ 
-  username: z.string().min(3), 
+const registerSchema = z.object({
+  username: z.string().min(3),
   password: z.string().min(8).regex(passwordRegex, "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"),
   full_name: z.string().optional()
 });
@@ -26,7 +26,7 @@ const loginSchema = z.object({ username: z.string(), password: z.string() });
 
 export async function registerHandler(req: Request, res: Response) {
   console.log('[AUTH] Registration request received');
-  
+
   const parsed = registerSchema.safeParse(req.body);
   if (!parsed.success) {
     const errorMessage = parsed.error.errors[0].message;
@@ -40,13 +40,13 @@ export async function registerHandler(req: Request, res: Response) {
     const isEmail = username.includes('@');
     // Detect 10-digit (Indian mobile) or 11-digit (with country code prefix)
     const isMobile = /^[6-9][0-9]{9,10}$/.test(username); // Indian mobile: starts with 6-9, total 10-11 digits
-    
+
     console.log('[AUTH] Username type detection:', { username, isEmail, isMobile });
 
     // Auto-detect and transform phone numbers
     let finalUsername = username;
     let phoneNumber = null;
-    
+
     if (isMobile) {
       // If username is a phone number, extract it and generate a proper username
       phoneNumber = username;
@@ -68,16 +68,16 @@ export async function registerHandler(req: Request, res: Response) {
     // For mobile numbers, we create a fake email. For emails, use the actual email.
     const authEmail = isEmail ? username : `${phoneNumber || username}@fabric-speaks.local`;
     console.log('[AUTH] Creating Supabase user with email:', authEmail);
-    
+
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: authEmail,
       password,
       email_confirm: true, // Auto-confirm for mobile numbers, they don't have email
-      user_metadata: { 
-        full_name, 
-        is_mobile: isMobile, 
+      user_metadata: {
+        full_name,
+        is_mobile: isMobile,
         original_identifier: username,
-        phone: phoneNumber 
+        phone: phoneNumber
       }
     });
 
@@ -112,10 +112,10 @@ export async function registerHandler(req: Request, res: Response) {
     }
 
     console.log('[AUTH] Registration successful for:', username);
-    return res.status(201).json({ 
-      id: created.id, 
-      user_id: authData.user.id, 
-      username: created.username, 
+    return res.status(201).json({
+      id: created.id,
+      user_id: authData.user.id,
+      username: created.username,
       role: created.role,
       message: successMessage,
       requires_verification: isEmail && !isMobile
@@ -229,9 +229,9 @@ export async function meHandler(req: Request, res: Response) {
   // Expect requireAuth middleware to populate req.user
   const profile = (req as any).user as any;
   console.log(`[AUTH] /me requested by: ${profile?.username} (ID: ${profile?.id})`);
-  
+
   if (!profile) return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
-  
+
   try {
     // Fetch full profile from database
     const [fullProfile] = await db
@@ -239,48 +239,132 @@ export async function meHandler(req: Request, res: Response) {
       .from(profiles)
       .where(eq(profiles.id, profile.id))
       .limit(1);
-    
+
     if (process.env.NODE_ENV !== 'production') {
       console.log('[AUTH] Profile data returning:', { id: profile.id, role: profile.role, email: profile.email });
     }
-    
+
     if (!fullProfile) {
       // Return basic profile if full profile not found
-      return res.status(200).json({ 
-        id: profile.id, 
-        username: profile.username, 
-        role: profile.role 
+      return res.status(200).json({
+        id: profile.id,
+        username: profile.username,
+        role: profile.role
       });
     }
-    
-    return res.status(200).json({ 
-      id: fullProfile.id, 
-      username: fullProfile.username, 
+
+    return res.status(200).json({
+      id: fullProfile.id,
+      username: fullProfile.username,
       role: fullProfile.role,
       full_name: fullProfile.full_name,
       email: fullProfile.email,
       phone: fullProfile.phone,
+      email_verified: fullProfile.email_verified,
+      phone_verified: fullProfile.phone_verified,
       avatar_url: fullProfile.avatar_url,
     });
   } catch (error) {
     console.error('[DEBUG] meHandler error:', error);
     // Fallback to basic profile
-    return res.status(200).json({ 
-      id: profile.id, 
-      username: profile.username, 
-      role: profile.role 
+    return res.status(200).json({
+      id: profile.id,
+      username: profile.username,
+      role: profile.role
     });
+  }
+}
+
+export async function initiateVerificationHandler(req: Request, res: Response) {
+  const { type, identifier } = req.body; // type: 'email' | 'phone'
+  const profile = (req as any).user;
+
+  if (!profile) return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+  if (!identifier || (type !== 'email' && type !== 'phone')) {
+    return res.status(400).json({ code: "INVALID_PAYLOAD", message: "Invalid verification request" });
+  }
+
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+
+    await (db as any).insert(verifications).values({
+      type,
+      identifier,
+      otp,
+      expires_at: expiresAt
+    });
+
+    // Send OTP
+    if (type === 'phone') {
+      await whatsappService.sendToCustomer(
+        identifier,
+        `Your Fabric Speaks verification code is: ${otp}. Valid for 15 minutes.`
+      );
+    } else {
+      // Send Email (Mock for now or implement email service)
+      console.log(`[AUTH] Email OTP for ${identifier}: ${otp}`);
+      // TODO: Implement actual email sending
+    }
+
+    return res.status(200).json({ message: "OTP sent successfully" });
+  } catch (error) {
+    return handleRouteError(error, res, "Initiate verification");
+  }
+}
+
+export async function confirmVerificationHandler(req: Request, res: Response) {
+  const { type, identifier, otp } = req.body;
+  const profile = (req as any).user;
+
+  if (!profile) return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+
+  try {
+    const validOtp = await db.query.verifications.findFirst({
+      where: and(
+        eq(verifications.type, type),
+        eq(verifications.identifier, identifier),
+        eq(verifications.otp, otp),
+        eq(verifications.verified, false),
+        gte(verifications.expires_at, new Date())
+      ),
+      orderBy: (verifications, { desc }) => [desc(verifications.created_at)]
+    });
+
+    if (!validOtp) {
+      return res.status(400).json({ code: "INVALID_OTP", message: "Invalid or expired OTP" });
+    }
+
+    // Mark verified in verifications table
+    await (db as any).update(verifications)
+      .set({ verified: true })
+      .where(eq(verifications.id, validOtp.id));
+
+    // Update Profile
+    const updateData: any = {};
+    if (type === 'email') updateData.email_verified = true;
+    if (type === 'phone') updateData.phone_verified = true;
+
+    // Use full profile update logic or just partial?
+    // Safety check: ensure we are updating the correct user
+    await (db as any).update(profiles)
+      .set(updateData)
+      .where(eq(profiles.user_id, profile.user_id));
+
+    return res.status(200).json({ message: "Verification successful" });
+  } catch (error) {
+    return handleRouteError(error, res, "Confirm verification");
   }
 }
 
 export async function updateMeHandler(req: Request, res: Response) {
   const profile = (req as any).user as any;
   console.log(`[AUTH] Update profile request for: ${profile?.id}`);
-  
+
   if (!profile) return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
-  
+
   const { full_name, email, phone, avatar_url } = req.body;
-  
+
   try {
     const updateData: any = {};
     if (full_name !== undefined) updateData.full_name = full_name;
@@ -288,22 +372,22 @@ export async function updateMeHandler(req: Request, res: Response) {
     if (phone !== undefined) updateData.phone = phone;
     if (avatar_url !== undefined) updateData.avatar_url = avatar_url;
     updateData.updated_at = new Date();
-    
+
     console.log('[AUTH] Updating profile data:', updateData);
-    
+
     const [updated] = await db
       .update(profiles)
       .set(updateData)
       .where(eq(profiles.id, profile.id))
       .returning();
-    
+
     if (!updated) {
       return res.status(404).json({ code: "NOT_FOUND", message: "Profile not found" });
     }
-    
-    return res.status(200).json({ 
-      id: updated.id, 
-      username: updated.username, 
+
+    return res.status(200).json({
+      id: updated.id,
+      username: updated.username,
       role: updated.role,
       full_name: updated.full_name,
       email: updated.email,
@@ -318,7 +402,7 @@ export async function updateMeHandler(req: Request, res: Response) {
 
 export async function resetPasswordHandler(req: Request, res: Response) {
   const { email } = req.body;
-  
+
   if (!email) return res.status(400).json({ code: "INVALID_PAYLOAD", message: "Email or Phone is required" });
 
   try {
@@ -356,9 +440,9 @@ export async function resetPasswordHandler(req: Request, res: Response) {
         console.log(`[AUTH] Phone user not found: ${phone}`);
       }
 
-      return res.status(200).json({ 
+      return res.status(200).json({
         message: "If an account exists, an OTP has been sent to your phone.",
-        isPhone: true 
+        isPhone: true
       });
 
     } else {
@@ -380,16 +464,16 @@ export async function resetPasswordHandler(req: Request, res: Response) {
 
 export async function confirmResetPasswordHandler(req: Request, res: Response) {
   const { identifier, otp, newPassword } = req.body;
-  
+
   if (!identifier || !otp || !newPassword) {
     return res.status(400).json({ code: "INVALID_PAYLOAD", message: "Missing required fields" });
   }
 
   // Validate password strength
   if (!passwordRegex.test(newPassword)) {
-    return res.status(400).json({ 
-      code: "WEAK_PASSWORD", 
-      message: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character" 
+    return res.status(400).json({
+      code: "WEAK_PASSWORD",
+      message: "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"
     });
   }
 
@@ -411,7 +495,7 @@ export async function confirmResetPasswordHandler(req: Request, res: Response) {
 
     // 2. Find User
     const profile = await db.query.profiles.findFirst({
-        where: sql`${profiles.phone} = ${identifier} OR ${profiles.username} = ${identifier} OR ${profiles.username} = ${`user_${identifier}`}`
+      where: sql`${profiles.phone} = ${identifier} OR ${profiles.username} = ${identifier} OR ${profiles.username} = ${`user_${identifier}`}`
     });
 
     if (!profile) {

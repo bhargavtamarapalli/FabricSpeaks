@@ -86,22 +86,43 @@ export default function HeroSection() {
                     className="absolute inset-0"
                 >
                     {/* Handle both Image and Video types */}
-                    {slides[current] && slides[current].type === 'video' ? (
-                        <video autoPlay loop muted playsInline className="w-full h-full object-cover opacity-80">
-                            <source src={slides[current].src} type="video/mp4" />
-                        </video>
-                    ) : (
-                        <picture>
-                            {/* Mobile source if available */}
-                            {(slides[current] as any).mobileSrc && (
-                                <source media="(max-width: 768px)" srcSet={(slides[current] as any).mobileSrc} />
+                    {/* Wrap content in Link if ctaLink exists, otherwise just render content */}
+                    {slides[current]?.ctaLink ? (
+                        <Link href={slides[current].ctaLink} onClick={() => handleBannerClick(slides[current])} className="block w-full h-full cursor-pointer">
+                            {slides[current].type === 'video' ? (
+                                <video autoPlay loop muted playsInline className="w-full h-full object-cover opacity-80">
+                                    <source src={slides[current].src} type="video/mp4" />
+                                </video>
+                            ) : (
+                                <picture>
+                                    {(slides[current] as any).mobileSrc && (
+                                        <source media="(max-width: 768px)" srcSet={(slides[current] as any).mobileSrc} />
+                                    )}
+                                    <img
+                                        src={slides[current]?.src || ''}
+                                        className={`w-full h-full object-cover opacity-80 ${slides[current]?.title === "Cashmere Warmth" ? "object-top" : "object-center"}`}
+                                        alt={slides[current]?.title || 'Hero Banner'}
+                                    />
+                                </picture>
                             )}
-                            <img
-                                src={slides[current]?.src || ''}
-                                className={`w-full h-full object-cover opacity-80 ${slides[current]?.title === "Cashmere Warmth" ? "object-top" : "object-center"}`}
-                                alt={slides[current]?.title || 'Hero Banner'}
-                            />
-                        </picture>
+                        </Link>
+                    ) : (
+                        slides[current].type === 'video' ? (
+                            <video autoPlay loop muted playsInline className="w-full h-full object-cover opacity-80">
+                                <source src={slides[current].src} type="video/mp4" />
+                            </video>
+                        ) : (
+                            <picture>
+                                {(slides[current] as any).mobileSrc && (
+                                    <source media="(max-width: 768px)" srcSet={(slides[current] as any).mobileSrc} />
+                                )}
+                                <img
+                                    src={slides[current]?.src || ''}
+                                    className={`w-full h-full object-cover opacity-80 ${slides[current]?.title === "Cashmere Warmth" ? "object-top" : "object-center"}`}
+                                    alt={slides[current]?.title || 'Hero Banner'}
+                                />
+                            </picture>
+                        )
                     )}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
                 </motion.div>

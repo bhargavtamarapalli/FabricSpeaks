@@ -33,8 +33,6 @@ export interface NotificationSetting {
     channels: {
         email: boolean;
         push: boolean;
-        email: boolean;
-        push: boolean;
         whatsapp: boolean;
     };
 }
@@ -97,14 +95,14 @@ export function NotificationPreferences({
         <div className={cn('space-y-6', className)}>
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-lg font-medium text-white">Notification Settings</h3>
-                    <p className="text-sm text-slate-400">Manage how you receive alerts and updates.</p>
+                    <h3 className="text-lg font-bold text-foreground">Notification Settings</h3>
+                    <p className="text-sm text-muted-foreground">Manage how you receive alerts and updates.</p>
                 </div>
                 {hasChanges && (
                     <Button
                         onClick={handleSave}
                         disabled={loading}
-                        className="bg-indigo-600 hover:bg-indigo-700"
+                        className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold shadow-sm"
                     >
                         {loading ? 'Saving...' : 'Save Changes'}
                     </Button>
@@ -113,7 +111,7 @@ export function NotificationPreferences({
 
             <div className="space-y-6">
                 {/* Headers */}
-                <div className="grid grid-cols-12 gap-4 border-b border-slate-800 pb-2 text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <div className="grid grid-cols-12 gap-4 border-b border-border pb-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
                     <div className="col-span-6 md:col-span-5">Category</div>
                     <div className="col-span-2 text-center flex flex-col items-center gap-1">
                         <Mail className="h-4 w-4" />
@@ -137,12 +135,12 @@ export function NotificationPreferences({
                         return (
                             <div key={setting.id} className="grid grid-cols-12 gap-4 items-center">
                                 <div className="col-span-6 md:col-span-5 flex gap-3">
-                                    <div className="mt-1 h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-slate-800 text-slate-400 hidden md:flex">
+                                    <div className="mt-1 h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground hidden md:flex">
                                         <Icon className="h-4 w-4" />
                                     </div>
                                     <div>
-                                        <p className="font-medium text-white">{setting.label}</p>
-                                        <p className="text-xs text-slate-400 line-clamp-1">{setting.description}</p>
+                                        <p className="font-bold text-foreground">{setting.label}</p>
+                                        <p className="text-xs text-muted-foreground line-clamp-1">{setting.description}</p>
                                     </div>
                                 </div>
 
@@ -150,21 +148,21 @@ export function NotificationPreferences({
                                     <Switch
                                         checked={setting.channels.email}
                                         onCheckedChange={() => handleToggle(setting.id, 'email')}
-                                        className="data-[state=checked]:bg-indigo-500"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                 </div>
                                 <div className="col-span-2 flex justify-center">
                                     <Switch
                                         checked={setting.channels.push}
                                         onCheckedChange={() => handleToggle(setting.id, 'push')}
-                                        className="data-[state=checked]:bg-indigo-500"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                 </div>
                                 <div className="col-span-2 flex justify-center">
                                     <Switch
                                         checked={setting.channels.whatsapp}
                                         onCheckedChange={() => handleToggle(setting.id, 'whatsapp')}
-                                        className="data-[state=checked]:bg-indigo-500"
+                                        className="data-[state=checked]:bg-primary"
                                     />
                                 </div>
                             </div>

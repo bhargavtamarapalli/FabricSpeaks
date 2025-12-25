@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { X, Loader2, User, Phone, Mail, KeyRound, ArrowLeft, RefreshCw } from "lucide-react";
+import { X, Loader2, User, Phone, Mail, KeyRound, ArrowLeft, RefreshCw, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { login, register, resetPassword, confirmResetPassword } = useAuth();
+  const { toast } = useToast();
 
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [isResetMode, setIsResetMode] = useState(false);
@@ -30,6 +32,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [name, setName] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -83,19 +86,37 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
         }
       } else if (isLoginMode) {
         await login(identifier, password);
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        });
         onClose(); // Close on success
       } else {
         // Registration flow
         await register(identifier, password, name);
+        toast({
+          title: "Account Created",
+          description: "Welcome to Fabric Speaks! Your account has been created.",
+        });
         onClose(); // Close on success (auto-logged in)
       }
     } catch (err: any) {
       console.error("Auth error:", err);
       if (err.message?.includes("Email not confirmed")) {
         setSuccessMessage("Registration successful! Please check your email to verify your account before logging in.");
+        toast({
+          title: "Verification Required",
+          description: "Please check your email to verify your account.",
+        });
         setIsLoginMode(true);
       } else {
-        setError(err.message || "Authentication failed. Please try again.");
+        const errorMsg = err.message || "Authentication failed. Please try again.";
+        setError(errorMsg);
+        toast({
+          variant: "destructive",
+          title: "Authentication Failed",
+          description: errorMsg,
+        });
       }
     } finally {
       setIsLoading(false);
@@ -343,14 +364,25 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                     </button>
                   )}
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={8}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 {!isLoginMode && (
                   <p className="text-[10px] text-muted-foreground">
                     Must be at least 8 characters with uppercase, lowercase, number, and special character.
@@ -371,7 +403,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 </>
               ) : (
                 isResetMode
-                  ? (resetStep === "VERIFY" ? "Set New Password" : "Send Reset Link")
+                  ? (resetStep === "VERIFY" ? "Set New Password" : (/^[6-9][0-9]{9,10}$/.test(identifier) ? "Send OTP" : "Send Reset Link"))
                   : (isLoginMode ? "Sign In" : "Create Account")
               )}
             </Button>

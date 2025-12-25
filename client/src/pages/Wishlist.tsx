@@ -1,19 +1,5 @@
-
-/**
- * Wishlist Page
- * 
- * Full page view for managing wishlists.
- * Allows viewing, organizing, and managing saved items.
- * 
- * @module client/src/pages/Wishlist
- */
-
 import { useState } from "react";
 import { Heart, ShoppingCart as ShoppingCartIcon, Trash2, Plus } from "lucide-react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ShoppingCart from "@/components/ShoppingCart";
-import AuthModal from "@/components/AuthModal";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -27,17 +13,69 @@ import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import PageLayout from "@/components/PageLayout";
+
+/**
+ * Helper function to extract a valid image URL from various product image formats
+ */
+function getProductImage(product: any): string | null {
+    if (!product) return null;
+
+    // Check images array first (most common)
+    if (product.images) {
+        if (Array.isArray(product.images) && product.images.length > 0) {
+            return product.images[0];
+        }
+        // Handle case where images might be a JSON string or object
+        if (typeof product.images === 'string') {
+            try {
+                const parsed = JSON.parse(product.images);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    return parsed[0];
+                }
+            } catch (e) {
+                // If parsing fails, maybe it's a direct URL
+                if (product.images.startsWith('http')) {
+                    return product.images;
+                }
+            }
+        }
+    }
+
+    // Check main_image
+    if (product.main_image) {
+        return product.main_image;
+    }
+
+    // Check signature_details.image
+    if (product.signature_details?.image) {
+        return product.signature_details.image;
+    }
+
+    // Check color_images (take first available)
+    if (product.color_images && typeof product.color_images === 'object') {
+        const firstColor = Object.keys(product.color_images)[0];
+        if (firstColor && product.color_images[firstColor]) {
+            const colorImg = product.color_images[firstColor];
+            if (Array.isArray(colorImg) && colorImg.length > 0) {
+                return colorImg[0];
+            } else if (typeof colorImg === 'string') {
+                return colorImg;
+            }
+        }
+    }
+
+    return null;
+}
 
 export default function Wishlist() {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [isCartOpen, setIsCartOpen] = useState(false);
-    const [isAuthOpen, setIsAuthOpen] = useState(false);
     const [selectedWishlistId, setSelectedWishlistId] = useState<string | undefined>();
     const [, setLocation] = useLocation();
 
     const cartQuery = useCart();
-    const { data: wishlists, isLoading: wishlistsLoading } = useWishlists();
+    const { data: wishlists, isLoading: wishlistsLoading } = useWishlists({ enabled: !!user });
     const { data: wishlistData, isLoading: itemsLoading } = useWishlist(
         selectedWishlistId || wishlists?.[0]?.id
     );
@@ -113,7 +151,7 @@ export default function Wishlist() {
                 description: "Item added to your shopping cart",
             });
 
-            setIsCartOpen(true);
+            document.dispatchEvent(new Event('open-cart'));
         } catch (error: any) {
             toast({
                 title: "Error",
@@ -140,13 +178,7 @@ export default function Wishlist() {
     // Require authentication
     if (!user) {
         return (
-            <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
-                <Header
-                    cartItemCount={(cartQuery.data?.items || []).reduce((sum, item) => sum + item.quantity, 0)}
-                    onCartClick={() => setIsCartOpen(true)}
-                    onAuthClick={() => setIsAuthOpen(true)}
-                />
-
+            <PageLayout className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
                 <main className="flex-1 flex items-center justify-center p-6">
                     <div className="text-center max-w-md">
                         <Heart className="h-16 w-16 text-stone-300 dark:text-neutral-700 mx-auto mb-6" />
@@ -155,35 +187,19 @@ export default function Wishlist() {
                             Save your favorite items and access them from any device
                         </p>
                         <Button
-                            onClick={() => setIsAuthOpen(true)}
+                            onClick={() => document.dispatchEvent(new Event('open-auth'))}
                             className="bg-stone-900 dark:bg-white text-white dark:text-black hover:bg-stone-800 dark:hover:bg-neutral-200 px-8 py-6 text-lg font-light"
                         >
                             Sign In
                         </Button>
                     </div>
                 </main>
-
-                <Footer />
-
-                <ShoppingCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} onCheckout={() => setLocation('/checkout')} />
-                <AuthModal
-                    isOpen={isAuthOpen}
-                    onClose={() => setIsAuthOpen(false)}
-                    onLogin={() => setIsAuthOpen(false)}
-                    onRegister={() => setIsAuthOpen(false)}
-                />
-            </div>
+            </PageLayout>
         );
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
-            <Header
-                cartItemCount={(cartQuery.data?.items || []).reduce((sum, item) => sum + item.quantity, 0)}
-                onCartClick={() => setIsCartOpen(true)}
-                onAuthClick={() => setIsAuthOpen(true)}
-            />
-
+        <PageLayout className="min-h-screen flex flex-col bg-white dark:bg-black transition-colors duration-300">
             <main className="flex-1 py-16 px-6">
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
@@ -243,17 +259,25 @@ export default function Wishlist() {
                                     {/* Product Image */}
                                     <Link href={`/product/${item.product_id}`}>
                                         <div className="aspect-[3/4] bg-stone-100 dark:bg-neutral-900 overflow-hidden rounded-lg mb-4 relative">
-                                            {item.product?.images?.[0] ? (
+                                            {getProductImage(item.product) ? (
                                                 <img
-                                                    src={item.product.images[0]}
-                                                    alt={item.product.name}
+                                                    src={getProductImage(item.product)!}
+                                                    alt={item.product?.name || 'Product'}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                    onError={(e) => {
+                                                        // Hide broken image and show fallback
+                                                        e.currentTarget.style.display = 'none';
+                                                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                                                        if (fallback) fallback.style.display = 'flex';
+                                                    }}
                                                 />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <Heart className="h-12 w-12 text-stone-300 dark:text-neutral-700" />
-                                                </div>
-                                            )}
+                                            ) : null}
+                                            <div
+                                                className="w-full h-full flex items-center justify-center absolute inset-0"
+                                                style={{ display: getProductImage(item.product) ? 'none' : 'flex' }}
+                                            >
+                                                <Heart className="h-12 w-12 text-stone-300 dark:text-neutral-700" />
+                                            </div>
 
                                             {/* Remove Button */}
                                             <button
@@ -353,16 +377,6 @@ export default function Wishlist() {
                     )}
                 </div>
             </main>
-
-            <Footer />
-
-            <ShoppingCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} onCheckout={() => setLocation('/checkout')} />
-            <AuthModal
-                isOpen={isAuthOpen}
-                onClose={() => setIsAuthOpen(false)}
-                onLogin={() => setIsAuthOpen(false)}
-                onRegister={() => setIsAuthOpen(false)}
-            />
-        </div>
+        </PageLayout>
     );
 }

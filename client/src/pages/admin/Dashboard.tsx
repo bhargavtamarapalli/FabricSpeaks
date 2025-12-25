@@ -15,7 +15,7 @@
  * @route /admin
  */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { DollarSign, ShoppingCart, Users, Package, TrendingUp, AlertTriangle } from 'lucide-react';
 import { AdminLayout } from '@/components/admin/layout/AdminLayout';
@@ -46,7 +46,6 @@ export default function AdminDashboard() {
     } = useAdminStats({
         period,
         refetchInterval: 120000, // Poll every 2 minutes
-        refetchIntervalInBackground: false
     });
 
     // Fetch recent orders
@@ -62,7 +61,19 @@ export default function AdminDashboard() {
         refetchIntervalInBackground: false,
     });
 
-    const recentOrders = recentOrdersData?.data || [];
+    // Prepare recent orders with customer data fallback
+    const recentOrders = useMemo(() => {
+        if (!recentOrdersData?.data) return [];
+
+        return recentOrdersData.data.map((order: any) => ({
+            ...order,
+            customer: order.customer || {
+                name: order.user?.username || 'Guest',
+                email: order.user?.email || 'No email',
+                avatar: null
+            }
+        }));
+    }, [recentOrdersData]);
 
     // Fetch revenue analytics
     const { data: revenueAnalytics } = useQuery({
@@ -106,21 +117,20 @@ export default function AdminDashboard() {
             <SEO
                 title="Dashboard - Admin Panel"
                 description="Admin dashboard for Fabric Speaks e-commerce platform"
-                noIndex
             />
 
             <div className="space-y-6">
                 {/* Page Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-white">Dashboard</h1>
-                        <p className="mt-1 text-sm text-slate-400">
+                        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">
                             Welcome back! Here's what's happening with your store.
                         </p>
                     </div>
 
                     {/* Period Selector */}
-                    <div className="flex items-center gap-2 rounded-lg border border-slate-800/50 bg-slate-900/50 p-1">
+                    <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 p-1">
                         {(['day', 'week', 'month', 'year'] as TimePeriod[]).map((p) => (
                             <button
                                 key={p}
@@ -128,8 +138,8 @@ export default function AdminDashboard() {
                                 className={cn(
                                     'rounded-md px-3 py-1.5 text-sm font-medium transition-all',
                                     period === p
-                                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                                        : 'text-slate-400 hover:text-white'
+                                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/10'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                 )}
                             >
                                 {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -335,7 +345,7 @@ function StatCard({ label, value, color, loading }: StatCardProps) {
             'rounded-lg border bg-gradient-to-br p-4',
             colorClasses[color]
         )}>
-            <p className="text-sm font-medium text-slate-400">{label}</p>
+            <p className="text-sm font-medium opacity-80">{label}</p>
             <p className="mt-2 text-2xl font-bold">{value}</p>
         </div>
     );
