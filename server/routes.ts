@@ -138,6 +138,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health", healthCheckHandler);
   app.get("/api/health/ready", readinessHandler);
   app.get("/api/health/live", livenessHandler);
+  // Configuration for frontend runtime injection
+  app.get("/api/config", (_req: Request, res: Response) => {
+    return res.json({
+      SUPABASE_URL: process.env.SUPABASE_URL,
+      SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+      RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID,
+      FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5000',
+      SENTRY_DSN: process.env.SENTRY_DSN || '',
+      NODE_ENV: process.env.NODE_ENV || 'production'
+    });
+  });
+
   app.get("/api/version", (_req: Request, res: Response) => {
     try {
       const pkgPath = path.resolve(process.cwd(), "package.json");
