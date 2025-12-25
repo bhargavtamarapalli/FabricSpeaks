@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: fabric-speaks
+    env: node
+    plan: free
+    region: singapore # Change this in the Dashboard if you prefer US/EU
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # To be set in Render Dashboard
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: VITE_SUPABASE_URL
+        fromService:
+          name: fabric-speaks
+          type: web
+          property: envVar
+          key: SUPABASE_URL
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
